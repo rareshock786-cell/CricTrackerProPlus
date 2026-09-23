@@ -1,0 +1,2505 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CricTracker-ProPlus</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#2563eb">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;}
+:root{
+  --radius-sm:6px; --radius-md:10px; --radius-lg:18px;
+  --font-display:'Oswald',sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+html[data-theme="dark"]{
+  --bg:#0b1220; --bg-stripe:rgba(59,130,246,.035);
+  --card:#111827; --card-hover:#172033; --border:#263650;
+  --ink:#eef4ff; --ink-dim:#9fb0c7; --ink-faint:#62748a;
+  --grass:#3b82f6; --grass-strong:#2563eb; --grass-soft:rgba(59,130,246,.16);
+  --gold-soft:rgba(209,172,58,.16);
+  --sky:#60a5fa; --sky-soft:rgba(96,165,250,.16);
+  --gold:#d1ac3a; --danger:#e0685f; --danger-soft:rgba(224,104,95,.15);
+  --success:#3b82f6; --chart-line:#3b82f6;
+  --logo-color:#3b82f6;
+  --shadow:0 10px 30px rgba(0,0,0,.45);
+  --overlay:rgba(6,12,24,.88);
+}
+html[data-theme="light"]{
+  --bg:#f4f8ff; --bg-stripe:rgba(37,99,235,.04);
+  --card:#ffffff; --card-hover:#f8fbff; --border:#dbe5f2;
+  --ink:#172033; --ink-dim:#53657a; --ink-faint:#8a99ab;
+  --grass:#2563eb; --grass-strong:#1d4ed8; --grass-soft:rgba(37,99,235,.10);
+  --gold-soft:rgba(168,121,15,.12);
+  --sky:#1d6fd1; --sky-soft:rgba(29,111,209,.12);
+  --gold:#a8790f; --danger:#b8433e; --danger-soft:rgba(184,67,62,.12);
+  --success:#2563eb; --chart-line:#2563eb;
+  --logo-color:#161616;
+  --shadow:0 10px 30px rgba(0,0,0,.08);
+  --overlay:rgba(244,248,255,.92);
+}
+html,body{height:100%;}
+body{
+  margin:0; font-family:var(--font-body); color:var(--ink);
+  background:
+    repeating-linear-gradient(180deg, var(--bg-stripe) 0px, var(--bg-stripe) 40px, transparent 40px, transparent 80px),
+    var(--bg);
+  min-height:100vh; transition:background .25s ease,color .25s ease;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:var(--font-display); font-weight:600; letter-spacing:.02em; margin:0;}
+.hidden{display:none !important;}
+button{font-family:inherit; cursor:pointer;}
+input,textarea,select{font-family:inherit; color:var(--ink); background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm);}
+a{color:var(--grass);}
+::selection{background:var(--grass-soft);}
+:focus-visible{outline:2px solid var(--grass); outline-offset:2px;}
+@media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }
+
+/* ---------- Lock overlay ---------- */
+.lock-overlay{
+  position:fixed; inset:0; z-index:999; display:flex; align-items:center; justify-content:center;
+  background:var(--overlay); backdrop-filter:blur(6px);
+}
+.lock-card{
+  width:min(380px,90vw); background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:36px 30px; text-align:center; box-shadow:var(--shadow);
+  animation:riseIn .4s ease;
+}
+@keyframes riseIn{from{opacity:0; transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.lock-logo{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:6px;}
+.lock-logo svg{width:34px;height:34px;}
+.lock-logo .cric-logo-emoji{font-size:34px; line-height:1;}
+.lock-logo .word{font-family:var(--font-display); font-size:26px; letter-spacing:.02em;}
+.lock-logo .accent{color:var(--grass);}
+.lock-logo .bang{color:var(--gold);}
+.lock-sub{color:var(--ink-dim); font-size:13.5px; margin:8px 0 22px;}
+#passcodeInput{
+  width:100%; padding:14px 16px; font-size:24px; letter-spacing:10px; text-align:center;
+  font-family:var(--font-mono); border-radius:var(--radius-md); margin-bottom:16px;
+}
+#passcodeInput:focus{border-color:var(--grass);}
+.lock-error{color:var(--danger); font-size:13px; min-height:18px; margin:10px 0 0;}
+.lock-hint{color:var(--ink-faint); font-size:11.5px; margin-top:18px;}
+
+/* ---------- Buttons ---------- */
+.btn{
+  border:1px solid transparent; border-radius:var(--radius-sm); padding:10px 18px;
+  font-size:14px; font-weight:600; transition:transform .12s ease, background .15s ease, border-color .15s ease;
+  display:inline-flex; align-items:center; gap:8px; justify-content:center;
+}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--grass); color:#061326; border-color:var(--grass);}
+.btn-primary:hover{background:var(--grass-strong);}
+.btn-ghost{background:transparent; color:var(--ink); border-color:var(--border);}
+.btn-ghost:hover{background:var(--card-hover);}
+.btn-danger{background:transparent; color:var(--danger); border-color:var(--danger);}
+.btn-danger:hover{background:var(--danger-soft);}
+.btn-block{width:100%;}
+.btn-sm{padding:6px 12px; font-size:12.5px;}
+.icon-btn{
+  background:transparent; border:1px solid var(--border); border-radius:50%;
+  width:38px; height:38px; display:flex; align-items:center; justify-content:center; font-size:16px; color:var(--ink);
+}
+.icon-btn:hover{background:var(--card-hover);}
+
+/* ---------- App shell ---------- */
+.app-header{
+  position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:20px;
+  padding:14px 28px; background:var(--card); border-bottom:1px solid var(--border);
+}
+.brand{display:flex; align-items:center; gap:8px; flex-shrink:0;}
+.brand svg{width:26px;height:26px;}
+.brand .word{font-family:var(--font-display); font-size:19px;}
+.brand .accent{color:var(--grass);}
+.brand .bang{color:var(--gold);}
+.main-nav{display:flex; gap:4px; flex:1;}
+.nav-link{
+  background:transparent; border:none; color:var(--ink-dim); font-size:13.5px; font-weight:600;
+  padding:8px 14px; border-radius:var(--radius-sm); position:relative; letter-spacing:.01em;
+}
+.nav-link:hover{color:var(--ink); background:var(--card-hover);}
+.nav-link.active{color:var(--grass);}
+.nav-link.active::after{
+  content:""; position:absolute; left:14px; right:14px; bottom:-15px; height:2px; background:var(--grass);
+}
+.header-actions{display:flex; align-items:center; gap:10px;}
+.nav-toggle{display:none; background:transparent; border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--ink); font-size:18px; padding:6px 10px;}
+
+.main-content{max-width:1080px; margin:0 auto; padding:28px 24px 80px;}
+.view{display:none; animation:fadeUp .3s ease;}
+.view.active{display:block;}
+@keyframes fadeUp{from{opacity:0; transform:translateY(6px);}to{opacity:1; transform:translateY(0);}}
+
+/* ---------- Dashboard ---------- */
+.date-header{margin-bottom:22px;}
+.date-header .eyebrow{color:var(--grass); font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;}
+.date-header h1{font-size:30px; margin-top:4px;}
+.stats-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:26px;}
+.stat-card{
+  background:var(--card); border:1px solid var(--border); border-top:3px solid var(--grass);
+  border-radius:var(--radius-md); padding:18px 16px; box-shadow:var(--shadow);
+}
+.stat-card .label{font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-faint); font-weight:600;}
+.stat-card .value{font-family:var(--font-mono); font-size:30px; font-weight:700; margin-top:6px;}
+.stat-card .sub{font-size:12px; color:var(--ink-dim); margin-top:2px;}
+.cta-row{display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;}
+.insights-card{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:22px 24px; box-shadow:var(--shadow); position:relative; overflow:hidden;
+}
+.insights-card::before{
+  content:""; position:absolute; top:0; left:0; bottom:0; width:4px; background:linear-gradient(180deg,var(--grass),var(--gold));
+}
+.insights-card h3{font-size:16px; display:flex; align-items:center; gap:8px; margin-bottom:12px;}
+.insights-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px;}
+.insights-list li{font-size:13.5px; color:var(--ink-dim); padding-left:18px; position:relative; line-height:1.5;}
+.insights-list li::before{content:"›"; position:absolute; left:0; color:var(--grass); font-weight:700;}
+.recent-section{margin-top:30px;}
+.section-title{font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-faint); font-weight:700; margin-bottom:12px;}
+
+/* ---------- Ledger row (scorecard style) ---------- */
+.ledger-row{display:flex; align-items:baseline; gap:8px; font-size:13.5px; padding:5px 0;}
+.ledger-row .lbl{color:var(--ink-dim); white-space:nowrap;}
+.ledger-row .dots{flex:1; border-bottom:1px dotted var(--border); transform:translateY(-4px);}
+.ledger-row .val{font-family:var(--font-mono); font-weight:700; white-space:nowrap;}
+
+/* ---------- Forms ---------- */
+.card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:24px; box-shadow:var(--shadow);}
+.form-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:20px;}
+.field{display:flex; flex-direction:column; gap:6px;}
+.field label{font-size:12px; font-weight:600; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.05em;}
+.field input, .field textarea, .field select{padding:10px 12px; font-size:14px;}
+.field input:focus, .field textarea:focus, .field select:focus{border-color:var(--grass);}
+textarea{resize:vertical; min-height:72px; line-height:1.5;}
+.category-checks{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px;}
+.cat-check{
+  display:flex; align-items:center; gap:8px; padding:10px 16px; border:1px solid var(--border);
+  border-radius:999px; cursor:pointer; font-size:13.5px; font-weight:600; transition:all .15s ease;
+  user-select:none;
+}
+.cat-check input{accent-color:var(--grass); width:16px; height:16px;}
+.cat-check.checked{background:var(--grass-soft); border-color:var(--grass); color:var(--grass);}
+.rating-panels{display:flex; flex-direction:column; gap:14px; margin-bottom:22px;}
+.rating-panel{border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 16px; background:var(--bg);}
+html[data-theme="light"] .rating-panel{background:var(--bg-alt,#eef4ff);}
+.rating-panel .cat-name{font-size:13px; font-weight:700; margin-bottom:10px; display:flex; justify-content:space-between;}
+.rating-panel .cat-name .picked{font-family:var(--font-mono); color:var(--grass);}
+.rating-scale{display:flex; gap:6px; flex-wrap:wrap;}
+.rate-btn{
+  width:32px; height:32px; border-radius:6px; border:1px solid var(--border); background:var(--card);
+  font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--ink-dim);
+}
+.rate-btn:hover{border-color:var(--grass);}
+.rate-btn.selected{background:var(--grass); color:#061326; border-color:var(--grass);}
+.reflect-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;}
+.reflect-grid .field.full{grid-column:1/-1;}
+.form-actions{display:flex; gap:10px; justify-content:flex-end; border-top:1px solid var(--border); padding-top:18px; margin-top:6px;}
+
+/* ---------- Journal ---------- */
+.journal-toolbar{display:flex; gap:12px; align-items:center; margin-bottom:18px; flex-wrap:wrap;}
+.toggle-group{display:flex; border:1px solid var(--border); border-radius:999px; overflow:hidden;}
+.toggle-group button{background:var(--card); border:none; padding:8px 16px; font-size:13px; font-weight:600; color:var(--ink-dim);}
+.toggle-group button.active{background:var(--grass); color:#061326;}
+.search-input{flex:1; min-width:180px; padding:9px 14px; font-size:13.5px;}
+.filter-chips{display:flex; gap:6px; flex-wrap:wrap;}
+.filter-chip{
+  padding:7px 13px; border-radius:999px; border:1px solid var(--border); background:var(--card);
+  font-size:12.5px; font-weight:600; color:var(--ink-dim);
+}
+.filter-chip.active{background:var(--grass-soft); border-color:var(--grass); color:var(--grass);}
+.session-list{display:flex; flex-direction:column; gap:12px;}
+.session-card{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px 18px;
+  transition:border-color .15s ease;
+}
+.session-card:hover{border-color:var(--grass);}
+.session-top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; cursor:pointer;}
+.session-meta{display:flex; flex-direction:column; gap:3px;}
+.session-date{font-family:var(--font-mono); font-weight:700; font-size:14px;}
+.session-ground{font-size:12.5px; color:var(--ink-dim);}
+.session-badges{display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;}
+.badge{font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--grass-soft); color:var(--grass); text-transform:uppercase; letter-spacing:.04em;}
+.badge.game-badge{background:var(--sky-soft); color:var(--sky);}
+.badge.holiday-badge{background:var(--gold-soft); color:var(--gold);}
+.game-day-check{border-color:var(--sky) !important;}
+#gameDayCheck.checked{background:var(--sky-soft); border-color:var(--sky); color:var(--sky);}
+.holiday-check{border-color:var(--gold) !important;}
+#holidayCheck.checked{background:var(--gold-soft); border-color:var(--gold); color:var(--gold);}
+.dot.game-dot{background:var(--sky);}
+.cal-day .dot.game-dot{background:var(--sky);}
+.avg-pill{
+  font-family:var(--font-mono); font-weight:700; font-size:15px; background:var(--bg); border:1px solid var(--border);
+  border-radius:8px; padding:6px 12px; text-align:center; min-width:56px;
+}
+.session-body{display:none; margin-top:14px; padding-top:14px; border-top:1px dashed var(--border); font-size:13.5px; color:var(--ink-dim); line-height:1.6;}
+.session-body.open{display:block;}
+.session-body .qa{margin-bottom:10px;}
+.session-body .qa strong{color:var(--ink); display:block; font-size:12px; text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px;}
+.session-actions{display:flex; gap:8px; margin-top:14px;}
+.tag-pill{display:inline-block; font-size:11px; background:var(--bg); border:1px solid var(--border); border-radius:999px; padding:3px 10px; margin:2px 4px 2px 0; color:var(--ink-dim);}
+.empty-state{text-align:center; padding:60px 20px; color:var(--ink-faint);}
+.empty-state svg{width:52px; height:52px; margin-bottom:14px; opacity:.5;}
+
+/* Calendar */
+.calendar-wrap{background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px; box-shadow:var(--shadow);}
+.cal-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+.cal-dow{text-align:center; font-size:11px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; padding-bottom:6px;}
+.cal-day{
+  aspect-ratio:1; border:1px solid var(--border); border-radius:8px; padding:6px; font-size:12px;
+  display:flex; flex-direction:column; justify-content:space-between; background:var(--bg); cursor:default;
+}
+.cal-day.empty{border:none; background:transparent;}
+.cal-day.has-session{cursor:pointer; border-color:var(--grass);}
+.cal-day.has-session:hover{background:var(--grass-soft);}
+.cal-day .dnum{font-family:var(--font-mono); font-weight:700;}
+.cal-day .dot{width:6px; height:6px; border-radius:50%; background:var(--grass); align-self:flex-end;}
+.cal-day.today .dnum{color:var(--grass);}
+.cal-day.holiday{border-color:var(--gold); background:var(--gold-soft); cursor:default;}
+.cal-day.holiday.has-session{border-color:var(--grass);}
+.cal-day .hmark{font-size:9px; font-weight:800; color:var(--gold); align-self:flex-end; letter-spacing:.02em;}
+.cal-legend{display:flex; gap:18px; margin-top:14px; font-size:11.5px; color:var(--ink-dim); flex-wrap:wrap;}
+.legend-dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:middle;}
+
+/* ---------- Progress ---------- */
+.progress-summary{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px;}
+.chart-card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px; box-shadow:var(--shadow); margin-bottom:20px;}
+.chart-card h3{font-size:15px; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;}
+.chart-card .chart-meta{font-size:12px; color:var(--ink-dim); margin-bottom:14px;}
+.chart-card svg{width:100%; height:auto; display:block;}
+
+/* ---------- Settings ---------- */
+.settings-grid{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+.settings-card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:22px; box-shadow:var(--shadow);}
+.settings-card.full{grid-column:1/-1;}
+.settings-card h3{font-size:15px; margin-bottom:14px; display:flex; align-items:center; gap:8px;}
+.goal-row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid var(--border);}
+.goal-row:last-child{border-bottom:none;}
+.goal-row .gname{font-size:13.5px; font-weight:600;}
+.goal-row .gprogress{flex:1; height:6px; background:var(--bg); border-radius:4px; margin:0 12px; overflow:hidden;}
+.goal-row .gbar{height:100%; background:var(--grass);}
+.goal-row input[type=number]{width:60px; padding:6px 8px; text-align:center; font-family:var(--font-mono);}
+.wipe-zone{border:1px dashed var(--danger); border-radius:var(--radius-md); padding:16px; margin-top:6px;}
+.field-row{display:flex; gap:10px;}
+.toast{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); z-index:1200;
+  background:var(--card); border:1px solid var(--grass); color:var(--ink); padding:12px 22px; border-radius:999px;
+  font-size:13.5px; font-weight:600; box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:all .25s ease;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+.toast.err{border-color:var(--danger);}
+
+.modal-backdrop{position:fixed; inset:0; background:var(--overlay); z-index:900; display:flex; align-items:center; justify-content:center; padding:20px;}
+.modal-box{background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:24px; max-width:480px; width:100%; box-shadow:var(--shadow); max-height:80vh; overflow-y:auto;}
+.modal-box h3{margin-bottom:14px;}
+.modal-close-row{display:flex; justify-content:flex-end; margin-top:16px;}
+
+@media (max-width:880px){
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+  .form-grid{grid-template-columns:1fr;}
+  .reflect-grid{grid-template-columns:1fr;}
+  .settings-grid{grid-template-columns:1fr;}
+  .progress-summary{grid-template-columns:1fr;}
+  .main-nav{display:none; position:absolute; top:100%; left:0; right:0; background:var(--card); flex-direction:column; padding:10px; border-bottom:1px solid var(--border);}
+  .main-nav.open{display:flex;}
+  .nav-link.active::after{display:none;}
+  .nav-toggle{display:block;}
+  .app-header{position:relative;}
+}
+
+/* ============================= V2 ACCOUNT ONBOARDING ============================= */
+.account-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--overlay);backdrop-filter:blur(10px)}
+.account-card{width:min(440px,100%);background:var(--card);border:1px solid var(--border);border-radius:22px;padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.35);text-align:center}
+.account-card .lock-logo{margin-bottom:18px}
+.google-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f2937;border:1px solid #d1d5db;border-radius:10px;padding:12px 16px;font-weight:700;cursor:pointer;font-size:14px}
+.google-btn:hover{background:#f8fafc}
+.google-mark{font-weight:900;font-size:18px}
+.account-form{text-align:left;margin-top:18px}
+.account-form label{display:block;font-size:11px;font-weight:700;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.05em;margin:12px 0 6px}
+.account-form input{width:100%;box-sizing:border-box}
+.account-note{font-size:12px;color:var(--ink-faint);line-height:1.5;margin:12px 0}
+.account-error{min-height:18px;color:var(--danger);font-size:12px;margin-top:10px}
+.account-user{display:flex;align-items:center;gap:12px;text-align:left;background:var(--grass-soft);border:1px solid var(--border);padding:12px;border-radius:12px;margin-bottom:14px}
+.account-avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--grass);color:#fff;font-weight:800;overflow:hidden}
+.account-avatar img{width:100%;height:100%;object-fit:cover}
+.account-user strong{display:block;color:var(--ink)}
+.account-user span{display:block;color:var(--ink-dim);font-size:12px;margin-top:2px}
+.hidden-v2{display:none!important}
+
+.auth-divider{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--ink-faint);font-size:12px}
+.auth-divider:before,.auth-divider:after{content:"";height:1px;background:var(--border);flex:1}
+
+
+/* ================= V2 FEATURE UPGRADE ================= */
+.v2-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0 20px}
+.v2-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.v2-card h3{font-size:15px;margin-bottom:8px}.v2-big{font-family:var(--font-display);font-size:28px}.v2-muted{color:var(--ink-dim);font-size:12px}.v2-section{margin-top:22px}.v2-section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.v2-section-title h2{font-size:18px}
+.v2-actions{display:flex;gap:8px;flex-wrap:wrap}.v2-list{display:grid;gap:9px}.v2-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--card)}
+.v2-bar{height:9px;background:var(--grass-soft);border-radius:999px;overflow:hidden}.v2-bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--grass),var(--sky));border-radius:inherit}.v2-kpi{font-family:var(--font-mono);font-size:12px;color:var(--ink-dim)}
+.v2-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.v2-form .full{grid-column:1/-1}.v2-form label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-dim);font-weight:700;margin-bottom:6px}.v2-form input,.v2-form select,.v2-form textarea{width:100%;padding:10px}.v2-form textarea{min-height:84px;resize:vertical}
+.v2-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid var(--border);border-radius:999px;font-size:11px;color:var(--ink-dim)}
+.v2-empty{padding:24px;text-align:center;color:var(--ink-dim);border:1px dashed var(--border);border-radius:var(--radius-md)}
+.v2-chart{display:grid;gap:8px}.v2-chart-row{display:grid;grid-template-columns:90px 1fr 50px;gap:8px;align-items:center;font-size:12px}.v2-chart-row strong{text-align:right;font-family:var(--font-mono)}
+.v2-offline{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:900;background:var(--card);border:1px solid var(--border);padding:8px 13px;border-radius:999px;font-size:12px;box-shadow:var(--shadow);display:none}.v2-offline.show{display:block}
+.v2-install{display:none}.v2-update{display:none;margin:10px 0;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--grass-soft);font-size:13px}
+@media(max-width:900px){.v2-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.v2-grid,.v2-form{grid-template-columns:1fr}.v2-row{align-items:flex-start;flex-direction:column}.v2-chart-row{grid-template-columns:70px 1fr 42px}}
+
+<style>
+/* V2 polish */
+.account-card{box-shadow:0 24px 70px rgba(0,0,0,.32);}
+.account-note{line-height:1.6;}
+.v2-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));}
+.v2-card{transition:transform .18s ease, border-color .18s ease, background .18s ease;}
+.v2-card:hover{transform:translateY(-2px);border-color:var(--grass);}
+.v2-row{gap:14px;}
+
+@media(max-width:700px){.app-header{gap:8px}.profile-chip{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.v2-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+</style>
+
+<style>
+/* Local backup + palette editor */
+.settings-card-heading{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:14px}
+.settings-help{font-size:13px;color:var(--ink-dim);line-height:1.55;margin:4px 0 0}
+.palette-editor{display:grid;grid-template-columns:minmax(320px,390px) 1fr;gap:18px}
+.palette-picker-card,.palette-slots-card{border:1px solid var(--border);background:var(--card);border-radius:var(--radius-md);padding:14px}
+.palette-color-box{position:relative;width:100%;max-width:330px;aspect-ratio:1;margin:0 auto;border-radius:12px;overflow:hidden;border:1px solid var(--border);box-shadow:0 10px 30px rgba(0,0,0,.16)}
+#paletteColorCanvas{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+.palette-slider-block{margin-top:13px}
+.palette-slider-label{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-dim);margin-bottom:6px}
+.palette-slider{width:100%;height:18px;margin:0;appearance:none;-webkit-appearance:none;background:transparent;cursor:pointer}
+.palette-slider::-webkit-slider-runnable-track{height:12px;border-radius:999px;border:1px solid rgba(255,255,255,.16)}
+.palette-slider::-moz-range-track{height:12px;border-radius:999px;border:1px solid rgba(255,255,255,.16)}
+#paletteHue{background:linear-gradient(90deg,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000);border-radius:999px}
+#paletteAlpha{background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,1));border-radius:999px}
+#paletteBrightness{background:linear-gradient(90deg,#000,#888,#fff);border-radius:999px}
+.palette-slider::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:18px;height:18px;margin-top:-4px;border-radius:50%;background:#fff;border:2px solid #172033;box-shadow:0 1px 5px rgba(0,0,0,.35)}
+.palette-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid #172033;box-shadow:0 1px 5px rgba(0,0,0,.35)}
+.palette-alpha-track{padding:3px;border-radius:999px;background-color:#fff;background-image:linear-gradient(45deg,#cbd5e1 25%,transparent 25%),linear-gradient(-45deg,#cbd5e1 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#cbd5e1 75%),linear-gradient(-45deg,transparent 75%,#cbd5e1 75%);background-size:10px 10px;background-position:0 0,0 5px,5px -5px,-5px 0}
+.palette-current{display:flex;align-items:center;gap:10px;margin-top:14px}
+.palette-current-swatch{width:48px;height:48px;border-radius:11px;border:1px solid var(--border);box-shadow:inset 0 0 0 1px rgba(255,255,255,.15);background-image:linear-gradient(45deg,#cbd5e1 25%,transparent 25%),linear-gradient(-45deg,#cbd5e1 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#cbd5e1 75%),linear-gradient(-45deg,transparent 75%,#cbd5e1 75%);background-size:10px 10px;background-position:0 0,0 5px,5px -5px,-5px 0}
+.palette-values{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.palette-values .field{margin:0}.palette-values input{width:100%;padding:9px 10px}
+.palette-slot-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.palette-slot{display:flex;align-items:center;gap:9px;width:100%;padding:9px 10px;border:1px solid var(--border);background:transparent;color:var(--ink);border-radius:10px;text-align:left}
+.palette-slot.active{border-color:var(--grass);background:var(--grass-soft)}
+.palette-swatch{width:28px;height:28px;border-radius:7px;border:1px solid rgba(255,255,255,.18);flex:0 0 auto}
+.palette-slot small{display:block;color:var(--ink-dim);font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+.palette-slot strong{font-size:12px}
+.palette-history,.palette-saved,.palette-image-result{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.color-chip{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);cursor:pointer}
+.palette-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.palette-image-input{margin-top:12px;width:100%}
+.backup-status-panel{border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;background:var(--grass-soft)}
+.backup-status{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+.backup-dot{width:10px;height:10px;border-radius:50%;background:var(--ink-faint);box-shadow:0 0 0 4px rgba(255,255,255,.03);flex:0 0 auto}
+.backup-dot.ok{background:#4CAF50}.backup-dot.warn{background:#f59e0b}.backup-dot.err{background:#ef4444}
+.backup-actions{display:flex;flex-wrap:wrap;gap:8px}
+.backup-actions .btn{flex:1 1 150px}
+.backup-note{font-size:11.5px;color:var(--ink-dim);line-height:1.55;margin:12px 0 0}
+.palette-note{font-size:11.5px;color:var(--ink-dim);line-height:1.55;margin:10px 0 0}
+@media(max-width:760px){.palette-editor{grid-template-columns:1fr}.palette-slot-list{grid-template-columns:1fr 1fr}.palette-values{grid-template-columns:1fr 1fr}.settings-card-heading{flex-direction:column}}
+</style>
+
+</head>
+<body>
+
+<div id="accountOverlay" class="account-overlay">
+  <div class="account-card">
+    <div class="lock-logo">
+      <span class="cric-logo-emoji" aria-label="Cricket">🏏</span>
+      <span class="word">Cric<span class="accent">Tracker</span><span class="bang">!</span></span>
+    </div>
+    <div id="profileStep">
+      <h2 id="profileTitle" style="margin:0 0 8px;">Create your CricTracker profile</h2>
+      <div id="accountUser" class="account-user">
+        <div class="account-avatar">👤</div>
+        <div><strong>Local profile</strong><span>Your data stays on this device.</span></div>
+      </div>
+      <div class="account-form">
+        <label for="profileName">Your name</label>
+        <input id="profileName" type="text" maxlength="80" placeholder="Enter your name" autocomplete="name">
+        <label for="setupPasscode">Create your passcode</label>
+        <input id="setupPasscode" type="password" minlength="4" maxlength="24" placeholder="Create a passcode" autocomplete="new-password">
+        <label for="setupPasscode2">Confirm passcode</label>
+        <input id="setupPasscode2" type="password" minlength="4" maxlength="24" placeholder="Confirm your passcode" autocomplete="new-password">
+        <p id="profileNote" class="account-note">Your passcode protects your local CricTracker data. It is never stored as plain text.</p>
+        <button type="button" id="completeSetupBtn" class="btn btn-primary btn-block">Create Profile</button>
+      </div>
+    </div>
+    <p id="accountError" class="account-error" aria-live="polite"></p>
+  </div>
+</div>
+
+<div id="lockOverlay" class="lock-overlay">
+  <div class="lock-card">
+    <div class="lock-logo">
+      <span class="cric-logo-emoji" aria-label="Cricket">🏏</span>
+      <span class="word">Cric<span class="accent">Tracker</span><span class="bang">!</span></span>
+    </div>
+    <p class="lock-sub">Enter your CricTracker passcode</p>
+    <input type="password" id="passcodeInput" inputmode="numeric" placeholder="••••" autocomplete="off" maxlength="24"/>
+    <button id="unlockBtn" class="btn btn-primary btn-block">Unlock</button>
+    <p class="lock-error" id="lockError" aria-live="polite"></p>
+
+    <p class="lock-hint">Your cricket data remains encrypted locally with AES-GCM when the app is unlocked.</p>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <header class="app-header">
+    <div class="brand">
+      <span class="cric-logo-emoji" aria-label="Cricket">🏏</span>
+      <span class="word">Cric<span class="accent">Tracker</span><span class="bang">!</span></span>
+    </div>
+    <nav class="main-nav" id="mainNav">
+      <button class="nav-link active" data-view="dashboard">Dashboard</button>
+      <button class="nav-link" data-view="newlog">Training</button>
+      <button class="nav-link" data-view="matches">Matches</button>
+      <button class="nav-link" data-view="journal">Journal</button>
+      <button class="nav-link" data-view="progress">Analytics</button>
+      <button class="nav-link" data-view="settings">Goals &amp; Settings</button>
+    </nav>
+    <div id="profileChip" style="display:none;font-size:12px;color:var(--ink-dim);margin-right:8px;"></div><div class="header-actions">
+      <button id="themeToggle" class="icon-btn" title="Toggle theme">🌙</button>
+      <button id="lockBtn" class="btn btn-ghost">Lock App</button>
+    </div>
+    <button id="navToggle" class="nav-toggle" aria-label="Menu">☰</button>
+  </header>
+
+  <main class="main-content">
+
+    <!-- DASHBOARD -->
+    <section id="view-dashboard" class="view active">
+      <div class="date-header">
+        <div class="eyebrow" id="dashEyebrow">Today's Session Log</div>
+        <h1 id="dashDate">—</h1>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="label">Total Sessions</div><div class="value" id="statSessions">0</div><div class="sub">logged all-time</div></div>
+        <div class="stat-card"><div class="label">Training Time</div><div class="value" id="statTime">0h</div><div class="sub" id="statTimeSub">0 minutes total</div></div>
+        <div class="stat-card"><div class="label">No. of Days</div><div class="value" id="statDays">0</div><div class="sub">active days logged</div></div>
+        <div class="stat-card"><div class="label">Avg Rating</div><div class="value" id="statAvg">–</div><div class="sub">out of 10</div></div>
+      </div>
+
+      <div class="cta-row">
+        <h2 style="font-size:19px;">Overview</h2>
+        <button class="btn btn-primary" data-nav="newlog">+ New Coaching Log</button>
+      </div>
+
+      <div class="insights-card">
+        <h3>🧠 Automated Insights</h3>
+        <ul class="insights-list" id="insightsList"></ul>
+      </div>
+
+      <div class="recent-section">
+        <div class="section-title">Recent Sessions</div>
+        <div class="session-list" id="recentSessions"></div>
+      </div>
+
+      <!-- Matches Record: dashboard-only panel -->
+      <div id="v2DashboardEnhancement" class="v2-section" style="display:none"></div>
+    </section>
+
+    <!-- NEW LOG -->
+    <section id="view-newlog" class="view">
+      <div class="cta-row">
+        <h1 style="font-size:22px;" id="editorTitle">New Coaching Log</h1>
+      </div>
+      <div class="card">
+        <div class="form-grid">
+          <div class="field"><label>Date</label><input type="date" id="fDate"></div>
+          <div class="field"><label>Ground / Location</label><input type="text" id="fGround" placeholder="e.g. Nets, Oval Ground"></div>
+          <div class="field"><label>Duration (minutes)</label><input type="number" id="fDuration" min="0" placeholder="60"></div>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+          <label class="cat-check game-day-check" id="gameDayCheck" style="width:fit-content;">
+            <input type="checkbox" id="fIsGameDay">
+            🎮 Game Day — physical play only, no focused coaching
+          </label>
+          <label class="cat-check holiday-check" id="holidayCheck" style="width:fit-content;">
+            <input type="checkbox" id="fIsHoliday">
+            🌧️ Holiday — coaching cancelled (rain / unexpected closure)
+          </label>
+        </div>
+
+        <div id="holidayReasonSection" class="hidden" style="margin-bottom:20px;">
+          <div class="field">
+            <label>Reason for Holiday <span style="color:var(--danger);">*</span></label>
+            <textarea id="fHolidayReason" placeholder="e.g. Rained out, ground waterlogged, coach unavailable…"></textarea>
+          </div>
+        </div>
+
+        <div id="focusAreasSection">
+          <label style="font-size:12px;font-weight:600;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:10px;">Focus Areas</label>
+          <div class="category-checks" id="categoryChecks"></div>
+
+          <div class="rating-panels" id="ratingPanels"></div>
+        </div>
+
+        <label style="font-size:12px;font-weight:600;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.05em;display:block;margin:6px 0 14px;">Journal Reflections</label>
+        <div class="reflect-grid">
+          <div class="field full"><label>What happened today?</label><textarea id="fWhatHappened"></textarea></div>
+          <div class="field full"><label>Coach's feedback</label><textarea id="fCoachFeedback"></textarea></div>
+          <div class="field"><label>What went well?</label><textarea id="fWentWell"></textarea></div>
+          <div class="field"><label>What went wrong?</label><textarea id="fWentWrong"></textarea></div>
+          <div class="field"><label>What did I learn?</label><textarea id="fLearned"></textarea></div>
+          <div class="field"><label>What should I improve?</label><textarea id="fImprove"></textarea></div>
+          <div class="field full"><label>Goal for next session</label><input type="text" id="fNextGoal"></div>
+          <div class="field full"><label>Skill Tags (comma-separated)</label><input type="text" id="fTags" placeholder="e.g. cover drive, yorker, footwork"></div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-ghost" id="cancelEditBtn">Cancel</button>
+          <button class="btn btn-primary" id="saveLogBtn">Save Coaching Log</button>
+        </div>
+      </div>
+    </section>
+
+    
+<!-- MATCHES -->
+<section id="view-matches" class="view">
+  <div class="v2-section-title"><div><h1 style="font-size:22px;">Matches</h1><div class="v2-muted">Record batting, bowling and fielding performance.</div></div><button class="btn btn-primary" id="addMatchBtn">+ Add Match</button></div>
+  <div class="v2-grid" id="matchKpis"></div>
+  <div class="v2-card" id="matchFormCard" style="display:none">
+    <h3 style="margin-bottom:16px">🏆 Match Record</h3>
+
+    <div class="v2-section" style="margin-bottom:14px">
+      <div class="v2-section-title"><h3>📍 Venue</h3></div>
+      <div class="v2-form">
+        <div><label>No. of Overs</label><input type="number" min="0" step="1" id="mMatchOvers" value="0"></div>
+        <div><label>Location</label><input id="mLocation" placeholder="Ground / venue"></div>
+        <div><label>Date</label><input type="date" id="mDate"></div>
+        <div><label>Result</label><select id="mResult"><option>Won</option><option>Lost</option><option>Tied</option><option>No Result</option></select></div>
+      </div>
+    </div>
+
+    <div class="v2-section" style="margin-bottom:14px">
+      <div class="v2-section-title"><h3>🏏 Batting</h3></div>
+      <div class="v2-form">
+        <div><label>Runs</label><input type="number" min="0" id="mRuns" value="0"></div>
+        <div><label>Ball Faced</label><input type="number" min="0" id="mBalls" value="0"></div>
+        <div><label>Fours</label><input type="number" min="0" id="mFours" value="0"></div>
+        <div><label>Sixes</label><input type="number" min="0" id="mSixes" value="0"></div>
+      </div>
+    </div>
+
+    <div class="v2-section" style="margin-bottom:14px">
+      <div class="v2-section-title"><h3>🎯 Bowling</h3></div>
+      <div class="v2-form">
+        <div><label>Overs Bowled</label><input type="number" min="0" step="0.1" id="mOvers" value="0"></div>
+        <div><label>Economy</label><input type="number" min="0" step="0.01" id="mEconomy" value="0"></div>
+        <div><label>Wickets Taken</label><input type="number" min="0" id="mWickets" value="0"></div>
+        <div><label>Runs Conceded</label><input type="number" min="0" id="mRunsConceded" value="0"></div>
+        <div><label>Extras Given</label><input type="number" min="0" id="mExtras" value="0"></div>
+      </div>
+    </div>
+
+    <div class="v2-section" style="margin-bottom:14px">
+      <div class="v2-section-title"><h3>🧤 Fielding</h3></div>
+      <div class="v2-form">
+        <div><label>Run-out/Stumping</label><input type="number" min="0" id="mDismissalsField" value="0"></div>
+        <div><label>Catches</label><input type="number" min="0" id="mCatches" value="0"></div>
+      </div>
+    </div>
+
+    <div class="v2-form">
+      <div class="full"><label>Match Notes</label><textarea id="mNotes" placeholder="What went well, what to improve, key moments..."></textarea></div>
+    </div>
+    <div class="v2-actions" style="margin-top:14px"><button class="btn btn-primary" id="saveMatchBtn">Save Match</button><button class="btn btn-ghost" id="cancelMatchBtn">Cancel</button></div>
+  </div>
+  <div class="v2-section"><div class="v2-section-title"><h2>Match History</h2></div><div id="matchList" class="v2-list"></div></div>
+</section>
+
+<!-- JOURNAL -->
+    <section id="view-journal" class="view">
+      <h1 style="font-size:22px;margin-bottom:16px;">Journal &amp; History</h1>
+      <div class="journal-toolbar">
+        <div class="toggle-group">
+          <button class="active" id="listViewBtn">List</button>
+          <button id="calViewBtn">Calendar</button>
+        </div>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search reflections, ground, tags…">
+      </div>
+      <div class="filter-chips" id="filterChips" style="margin-bottom:18px;"></div>
+
+      <div id="journalListWrap">
+        <div class="session-list" id="journalList"></div>
+      </div>
+      <div id="journalCalWrap" class="hidden">
+        <div class="calendar-wrap">
+          <div class="cal-header">
+            <button class="btn btn-ghost btn-sm" id="calPrev">‹ Prev</button>
+            <h3 id="calTitle"></h3>
+            <button class="btn btn-ghost btn-sm" id="calNext">Next ›</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="cal-legend">
+            <span><span class="legend-dot" style="background:var(--grass);"></span>Session logged</span>
+            <span><span class="legend-dot" style="background:var(--sky);"></span>Game day</span>
+            <span><span class="legend-dot" style="background:var(--gold);"></span>Holiday / no coaching</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROGRESS -->
+    <section id="view-progress" class="view">
+      <h1 style="font-size:22px;margin-bottom:16px;">Progress Analytics</h1>
+      <div class="progress-summary" id="progressSummary"></div>
+      <div id="chartsWrap"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="view-settings" class="view">
+      <h1 style="font-size:22px;margin-bottom:16px;">Goals &amp; Settings</h1>
+      <div class="settings-grid">
+        <div class="settings-card">
+          <h3>🎯 Target Rating Goals</h3>
+          <div id="goalsList"></div>
+          <button class="btn btn-primary btn-sm" id="saveGoalsBtn" style="margin-top:14px;">Save Goals</button>
+        </div>
+
+        <div class="settings-card">
+          <h3>🔐 Update Passcode</h3>
+          <div class="field" style="margin-bottom:10px;"><label>Current Passcode</label><input type="password" id="oldPass"></div>
+          <div class="field" style="margin-bottom:10px;"><label>New Passcode</label><input type="password" id="newPass"></div>
+          <div class="field" style="margin-bottom:14px;"><label>Confirm New Passcode</label><input type="password" id="confirmPass"></div>
+          <button class="btn btn-primary btn-sm" id="changePassBtn">Update Passcode</button>
+        </div>
+
+        <div class="settings-card full">
+          <div class="settings-card-heading">
+            <div><h3>🎨 Appearance &amp; Custom Palette</h3><p class="settings-help">Customize CricTracker's colors while keeping the same UI.</p></div>
+            <button class="btn btn-ghost btn-sm" id="resetPaletteBtn">Reset Default</button>
+          </div>
+          <div id="paletteEditor" class="palette-editor"></div>
+        </div>
+
+        <div class="settings-card full">
+          <div class="settings-card-heading">
+            <div><h3>💾 Automatic JSON Backup</h3><p class="settings-help">Keep one JSON file on your computer automatically updated. IndexedDB remains the primary storage.</p></div>
+            <span id="backupSupportBadge" class="v2-pill">Checking…</span>
+          </div>
+          <div class="backup-status-panel">
+            <div class="backup-status"><span id="backupStatusDot" class="backup-dot"></span><div><strong id="backupStatusText">No ProPlus JSON file connected</strong><div id="backupLastSync" class="v2-muted">Choose a file to enable automatic backups.</div></div></div>
+            <div class="backup-actions">
+              <button class="btn btn-primary btn-sm" id="setBackupFileBtn">Set ProPlus Data File</button>
+              <button class="btn btn-ghost btn-sm" id="connectExistingBackupBtn">Use Existing JSON</button>
+              <button class="btn btn-ghost btn-sm" id="backupNowBtn">Backup Now</button>
+              <button class="btn btn-ghost btn-sm" id="restoreConnectedBackupBtn">Restore File</button>
+              <button class="btn btn-ghost btn-sm" id="disconnectBackupBtn">Disconnect</button>
+            </div>
+            <p class="backup-note">Automatic file access is supported in compatible Chromium browsers on secure sites such as GitHub Pages. If your browser does not support it, use the manual JSON buttons below.</p>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h3>📦 Manual Backup</h3>
+          <p class="settings-help">Use the dedicated CricTracker-ProPlus JSON file as your local read/write data file, or use export/import for a portable copy.</p>
+          <div class="field-row">
+            <button class="btn btn-ghost btn-sm" id="exportBtn">Export JSON</button>
+            <button class="btn btn-ghost btn-sm" id="importBtn">Import JSON</button>
+          </div>
+          <input type="file" id="importFile" accept=".json" class="hidden">
+        </div>
+
+        <div class="settings-card">
+          <h3>⏱️ Auto-Lock</h3>
+          <div class="field"><label>Lock app after inactivity</label><select id="autoLockSelect"><option value="0">Never</option><option value="1">1 minute</option><option value="5">5 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option></select></div>
+          <button class="btn btn-primary btn-sm" id="saveAutoLockBtn" style="margin-top:10px;">Save</button>
+        </div>
+
+        <div class="settings-card full">
+          <h3>🗓️ Weekly No-Coaching Days</h3>
+          <p class="settings-help">Mark days your coaching center is always closed. They are excluded from active-day counts and highlighted on the Journal calendar.</p>
+          <div class="filter-chips" id="weeklyHolidayChips" style="margin-bottom:20px;"></div>
+          <button class="btn btn-primary btn-sm" id="saveHolidaysBtn">Save</button>
+        </div>
+
+        <div class="settings-card">
+          <h3>👤 Local Profile</h3>
+          <p id="accountSettingsText" class="settings-help">Your CricTracker profile is stored locally on this device.</p>
+        </div>
+
+        <div class="settings-card">
+          <h3>⚠️ Danger Zone</h3>
+          <div class="wipe-zone">
+            <p class="settings-help" style="margin:0 0 10px;">Permanently delete all CricTracker data and reset this device. This cannot be undone.</p>
+            <div class="field" style="margin-bottom:10px;"><label>Type DELETE to confirm</label><input type="text" id="wipeConfirmInput" placeholder="DELETE"></div>
+            <button class="btn btn-danger btn-sm" id="wipeBtn">Wipe All Data</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="v2Offline" class="v2-offline">Offline mode — local changes are safe and will remain on this device.</div><div id="v2Update" class="v2-update">A new CricTracker version is available. <button class="btn btn-primary btn-sm" id="v2UpdateBtn">Update</button></div><div id="modalRoot"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================= CONSTANTS ============================= */
+const DB_NAME = "CricTrackerDB";
+const DB_VERSION = 2;
+const CATEGORIES = ["batting","bowling","fielding","fitness"];
+const CAT_LABELS = {batting:"Batting", bowling:"Bowling", fielding:"Fielding", fitness:"Fitness"};
+
+/* ============================= STATE ============================= */
+let aesKey = null;
+let sessions = [];               // decrypted in-memory session objects
+let goals = {batting:8,bowling:8,fielding:8,fitness:8};
+let holidays = {weeklyDays:[], dates:[]};  // weeklyDays: 0=Sun..6=Sat, dates: [{date,label}]
+let currentView = "dashboard";
+let editingId = null;
+let formCategories = {batting:false,bowling:false,fielding:false,fitness:false};
+let formRatings = {};
+let journalMode = "list";        // list | calendar
+let activeFilters = new Set();
+let calCursor = new Date();
+let matchRecords = [];
+let trainingRecords = [];
+let autoLockMinutes = 0;
+let lastActivityAt = Date.now();
+let deferredInstallPrompt = null;
+let backupFileHandle = null;
+let backupLastSync = null;
+let backupTimer = null;
+let backupInFlight = false;
+let backupPending = false;
+let paletteState = null;
+let paletteSlot = "primary";
+
+/* ============================= UTIL ============================= */
+function $(sel, root){ return (root||document).querySelector(sel); }
+function $all(sel, root){ return Array.from((root||document).querySelectorAll(sel)); }
+function pad2(n){ return String(n).padStart(2,"0"); }
+function fmtDateISO(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
+function todayISO(){ return fmtDateISO(new Date()); }
+function fmtDatePretty(iso){
+  const d = new Date(iso+"T00:00:00");
+  return d.toLocaleDateString(undefined,{weekday:"long", year:"numeric", month:"long", day:"numeric"});
+}
+function fmtDateShort(iso){
+  const d = new Date(iso+"T00:00:00");
+  return d.toLocaleDateString(undefined,{month:"short", day:"numeric", year:"numeric"});
+}
+function uid(){
+  if(crypto.randomUUID) return crypto.randomUUID();
+  return "id-"+Date.now()+"-"+Math.random().toString(16).slice(2);
+}
+function toast(msg, isErr){
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.toggle("err", !!isErr);
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>t.classList.remove("show"), 2600);
+}
+function round1(n){ return Math.round(n*10)/10; }
+
+/* ============================= CRYPTO ============================= */
+function bufToB64(buf){
+  const bytes = new Uint8Array(buf);
+  let bin = "";
+  for(let i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+function b64ToBuf(b64){
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+  return arr.buffer;
+}
+async function sha256Hex(str){
+  const enc = new TextEncoder().encode(str);
+  const hashBuf = await crypto.subtle.digest("SHA-256", enc);
+  return Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+async function deriveKey(passcode, saltB64){
+  const salt = new Uint8Array(b64ToBuf(saltB64));
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(passcode), {name:"PBKDF2"}, false, ["deriveKey"]
+  );
+  return crypto.subtle.deriveKey(
+    {name:"PBKDF2", salt, iterations:100000, hash:"SHA-256"},
+    keyMaterial,
+    {name:"AES-GCM", length:256},
+    false,
+    ["encrypt","decrypt"]
+  );
+}
+async function encryptObj(key, obj){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const data = new TextEncoder().encode(JSON.stringify(obj));
+  const cipher = await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, data);
+  return {iv:bufToB64(iv), data:bufToB64(cipher)};
+}
+async function decryptObj(key, payload){
+  const iv = new Uint8Array(b64ToBuf(payload.iv));
+  const cipherBuf = b64ToBuf(payload.data);
+  const plainBuf = await crypto.subtle.decrypt({name:"AES-GCM", iv}, key, cipherBuf);
+  return JSON.parse(new TextDecoder().decode(plainBuf));
+}
+
+/* ============================= SAFE KEY-VALUE (localStorage w/ in-memory fallback) =============================
+   Some browsers (notably when a file is opened directly via file://, or with strict
+   cookie/storage settings) throw SecurityError on localStorage/IndexedDB access.
+   These helpers make sure the app degrades gracefully instead of silently failing. */
+const memKV = {};
+function safeGet(key){
+  try{ return localStorage.getItem(key); }
+  catch(e){ return Object.prototype.hasOwnProperty.call(memKV,key) ? memKV[key] : null; }
+}
+function safeSet(key,val){
+  try{ localStorage.setItem(key,val); }
+  catch(e){ memKV[key] = val; }
+}
+function safeClearAll(){
+  try{ localStorage.clear(); }catch(e){}
+  Object.keys(memKV).forEach(k=>delete memKV[k]);
+}
+
+/* ============================= STORAGE (IndexedDB -> localStorage -> memory) =============================
+   Detects the best available persistence layer once, then transparently routes all
+   reads/writes through it. If IndexedDB is blocked (common under file://), the app
+   falls back to localStorage, and finally to an in-memory store as a last resort so
+   the passcode gate and app always function even without durable persistence. */
+const storageState = {backend:null, warned:false};
+const memStore = {sessions:[], meta:[], handles:[]};
+
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    if(!window.indexedDB){ reject(new Error("no-indexeddb")); return; }
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e)=>{
+      const db = e.target.result;
+      if(!db.objectStoreNames.contains("sessions")) db.createObjectStore("sessions", {keyPath:"id"});
+      if(!db.objectStoreNames.contains("meta")) db.createObjectStore("meta", {keyPath:"key"});
+      if(!db.objectStoreNames.contains("handles")) db.createObjectStore("handles", {keyPath:"key"});
+    };
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+    req.onblocked = ()=>reject(new Error("blocked"));
+  });
+}
+async function idbGetAll(store){
+  const db = await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(store,"readonly");
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+async function idbGet(store,key){
+  const db = await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(store,"readonly");
+    const req = tx.objectStore(store).get(key);
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+async function idbPut(store,val){
+  const db = await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(store,"readwrite");
+    tx.objectStore(store).put(val);
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+async function idbDelete(store,key){
+  const db = await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(store,"readwrite");
+    tx.objectStore(store).delete(key);
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+
+async function idbHandleGet(key){
+  const db = await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction("handles","readonly");
+    const req = tx.objectStore("handles").get(key);
+    req.onsuccess = ()=>resolve(req.result?.handle || null);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+async function idbHandlePut(key, handle){
+  const db = await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction("handles","readwrite");
+    tx.objectStore("handles").put({key, handle});
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+async function idbHandleDelete(key){
+  const db = await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction("handles","readwrite");
+    tx.objectStore("handles").delete(key);
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+async function getSavedBackupHandle(){
+  try{
+    if((await detectStorageBackend()) !== "indexeddb") return null;
+    return await idbHandleGet("backupFile");
+  }catch(e){ return null; }
+}
+async function saveBackupHandle(handle){
+  try{
+    if((await detectStorageBackend()) !== "indexeddb") return false;
+    await idbHandlePut("backupFile", handle);
+    return true;
+  }catch(e){ return false; }
+}
+async function clearBackupHandle(){
+  try{ if((await detectStorageBackend()) === "indexeddb") await idbHandleDelete("backupFile"); }catch(e){}
+}
+
+function keyPropFor(store){ return store==="sessions" ? "id" : "key"; }
+function lsStoreRead(store){
+  const raw = safeGet("ct_ls_"+store);
+  try{ return raw ? JSON.parse(raw) : []; }catch(e){ return []; }
+}
+function lsStoreWrite(store,arr){ safeSet("ct_ls_"+store, JSON.stringify(arr)); }
+
+async function detectStorageBackend(){
+  if(storageState.backend) return storageState.backend;
+  try{
+    const db = await openDB();
+    // Real read/write probe: open() can succeed while transactions still throw.
+    await new Promise((resolve,reject)=>{
+      const tx = db.transaction("meta","readwrite");
+      tx.objectStore("meta").put({key:"__probe__", v:1});
+      tx.oncomplete = resolve;
+      tx.onerror = ()=>reject(tx.error);
+    });
+    await new Promise((resolve,reject)=>{
+      const tx = db.transaction("meta","readwrite");
+      tx.objectStore("meta").delete("__probe__");
+      tx.oncomplete = resolve;
+      tx.onerror = ()=>reject(tx.error);
+    });
+    storageState.backend = "indexeddb";
+    return storageState.backend;
+  }catch(e){ /* fall through */ }
+  try{
+    const t = "__ct_probe__";
+    localStorage.setItem(t,"1");
+    localStorage.removeItem(t);
+    storageState.backend = "localstorage";
+    return storageState.backend;
+  }catch(e){ /* fall through */ }
+  storageState.backend = "memory";
+  return storageState.backend;
+}
+
+async function dbGetAll(store){
+  const backend = await detectStorageBackend();
+  if(backend==="indexeddb"){
+    try{ return await idbGetAll(store); }
+    catch(e){ storageState.backend="localstorage"; return dbGetAll(store); }
+  }
+  if(backend==="localstorage") return lsStoreRead(store);
+  return memStore[store].slice();
+}
+async function dbGet(store,key){
+  const backend = await detectStorageBackend();
+  const kp = keyPropFor(store);
+  if(backend==="indexeddb"){
+    try{ return await idbGet(store,key); }
+    catch(e){ storageState.backend="localstorage"; return dbGet(store,key); }
+  }
+  if(backend==="localstorage") return lsStoreRead(store).find(x=>x[kp]===key);
+  return memStore[store].find(x=>x[kp]===key);
+}
+async function dbPut(store,val){
+  const backend = await detectStorageBackend();
+  const kp = keyPropFor(store);
+  if(backend==="indexeddb"){
+    try{ return await idbPut(store,val); }
+    catch(e){ storageState.backend="localstorage"; return dbPut(store,val); }
+  }
+  if(backend==="localstorage"){
+    const arr = lsStoreRead(store);
+    const idx = arr.findIndex(x=>x[kp]===val[kp]);
+    if(idx>=0) arr[idx]=val; else arr.push(val);
+    lsStoreWrite(store, arr);
+    return;
+  }
+  const idx = memStore[store].findIndex(x=>x[kp]===val[kp]);
+  if(idx>=0) memStore[store][idx]=val; else memStore[store].push(val);
+}
+async function dbDelete(store,key){
+  const backend = await detectStorageBackend();
+  const kp = keyPropFor(store);
+  if(backend==="indexeddb"){
+    try{ return await idbDelete(store,key); }
+    catch(e){ storageState.backend="localstorage"; return dbDelete(store,key); }
+  }
+  if(backend==="localstorage"){
+    lsStoreWrite(store, lsStoreRead(store).filter(x=>x[kp]!==key));
+    return;
+  }
+  memStore[store] = memStore[store].filter(x=>x[kp]!==key);
+}
+
+// Clear only CricTracker data stores before restoring a backup.
+// The file-handle store is intentionally preserved so automatic backup remains connected.
+async function clearEncryptedStores(){
+  for(const store of ["sessions","meta"]){
+    const records=await dbGetAll(store);
+    const kp=keyPropFor(store);
+    for(const record of records){
+      if(record && record[kp]!==undefined) await dbDelete(store,record[kp]);
+    }
+    if(Array.isArray(memStore[store])) memStore[store]=[];
+  }
+}
+// Backward-compatibility alias for older restore code / cached builds.
+// Some earlier builds referenced the misspelled global name "ClearEncrytedStores".
+window.ClearEncrytedStores = clearEncryptedStores;
+window.clearEncryptedStores = clearEncryptedStores;
+
+/* ============================= LOCK / UNLOCK ============================= */
+async function ensureDefaultPasscode(){
+  // V2: no universal/default passcode. A passcode is created by the user during profile setup.
+  return;
+}
+
+async function tryUnlock(passcode){
+  const errEl = $("#lockError");
+  errEl.textContent = "";
+  if(!passcode){ errEl.textContent = "Please enter your passcode."; return; }
+  if(!window.crypto || !window.crypto.subtle){
+    errEl.textContent = "This browser is blocking secure crypto for local files. Try Chrome or Firefox, or open this file from a local server.";
+    return;
+  }
+  const hash = safeGet("ct_hash");
+  const salt = safeGet("ct_salt");
+  const inputHash = await sha256Hex(passcode);
+  if(inputHash !== hash){
+    errEl.textContent = "Incorrect passcode. Please try again.";
+    $("#passcodeInput").value = "";
+    $("#passcodeInput").focus();
+    return;
+  }
+  try{
+    aesKey = await deriveKey(passcode, salt);
+  }catch(e){
+    errEl.textContent = "Could not derive an encryption key in this browser. Please try Chrome or Firefox.";
+    return;
+  }
+  // Data loading never throws now (storage layer falls back automatically),
+  // but keep a guard so a truly unexpected error still surfaces cleanly.
+  try{
+    await loadAllData();
+    await loadV2Meta();
+  }catch(e){
+    errEl.textContent = "Unlocked, but couldn't load all saved data. Please try again.";
+    sessions = [];
+    matchRecords = [];
+    trainingRecords = [];
+    goals = {batting:8,bowling:8,fielding:8,fitness:8};
+  }
+  $("#passcodeInput").value = "";
+  $("#lockOverlay").classList.add("hidden");
+  $("#app").classList.remove("hidden");
+  renderMatches();
+  renderV2Dashboard();
+  renderAll();
+  maybeShowStorageNotice();
+}
+
+/* ============================= PASSCODE RECOVERY (local, offline) =============================
+   No passcode is ever stored — only its SHA-256 hash — so there is no "reveal" button.
+   These helpers let the person test guesses, or brute-force a numeric PIN, entirely
+   against the hash already sitting in this browser's storage. Nothing leaves the device. */
+let bruteCancel = false;
+
+async function tryRecoveryGuess(){
+  const val = $("#guessInput").value;
+  const resEl = $("#recoveryResult");
+  if(!val){ resEl.innerHTML = ""; return; }
+  const hash = safeGet("ct_hash");
+  if(!hash){ resEl.innerHTML = '<span style="color:var(--danger);">No stored passcode hash found on this device/file.</span>'; return; }
+  const h = await sha256Hex(val);
+  if(h === hash){
+    resEl.innerHTML = '<div style="color:var(--grass);font-weight:700;">✅ That\'s a match! Your passcode is: <span style="font-family:var(--font-mono);font-size:15px;">'+escapeHtml(val)+'</span></div>';
+  }else{
+    resEl.innerHTML = '<span style="color:var(--danger);">Not a match.</span>';
+  }
+}
+
+async function startBruteForce(){
+  const hash = safeGet("ct_hash");
+  const resEl = $("#recoveryResult");
+  const progressEl = $("#bruteProgress");
+  if(!hash){ resEl.innerHTML = '<span style="color:var(--danger);">No stored passcode hash found on this device/file.</span>'; return; }
+
+  const len = Number($("#pinLength").value);
+  const total = Math.pow(10, len);
+  bruteCancel = false;
+  $("#bruteForceBtn").classList.add("hidden");
+  $("#stopBruteBtn").classList.remove("hidden");
+  resEl.innerHTML = "";
+  const start = Date.now();
+  const CHUNK = 300;
+
+  for(let base=0; base<total; base+=CHUNK){
+    if(bruteCancel){ progressEl.textContent = "Stopped."; break; }
+    const upper = Math.min(base+CHUNK, total);
+    const chunk = [];
+    for(let i=base;i<upper;i++){
+      const candidate = String(i).padStart(len,"0");
+      chunk.push(sha256Hex(candidate).then(h=>({candidate,h})));
+    }
+    const results = await Promise.all(chunk);
+    const found = results.find(r=>r.h===hash);
+    if(found){
+      resEl.innerHTML = '<div style="color:var(--grass);font-weight:700;">✅ Found it! Your passcode is: <span style="font-family:var(--font-mono);font-size:16px;">'+found.candidate+'</span></div>';
+      progressEl.textContent = "Done in "+((Date.now()-start)/1000).toFixed(1)+"s. Please log in and set a passcode you'll remember, or write it down somewhere safe.";
+      $("#bruteForceBtn").classList.remove("hidden");
+      $("#stopBruteBtn").classList.add("hidden");
+      return;
+    }
+    progressEl.textContent = "Tried "+upper.toLocaleString()+" / "+total.toLocaleString()+"…";
+    await new Promise(r=>setTimeout(r,0)); // yield so the UI stays responsive
+  }
+  if(!bruteCancel){
+    resEl.innerHTML = '<span style="color:var(--danger);">No '+len+'-digit numeric PIN matched. Try a different length, or your passcode may include letters/symbols — try the guess box above instead.</span>';
+  }
+  $("#bruteForceBtn").classList.remove("hidden");
+  $("#stopBruteBtn").classList.add("hidden");
+}
+
+async function maybeShowStorageNotice(){
+  if(storageState.warned) return;
+  const backend = await detectStorageBackend();
+  if(backend==="localstorage"){
+    storageState.warned = true;
+    toast("Running in browser-storage mode (IndexedDB unavailable for local files). Your data still saves on this device.");
+  }else if(backend==="memory"){
+    storageState.warned = true;
+    toast("Persistent storage is blocked in this browser for local files — data will be lost on refresh. Try Chrome, or open this file from a local server.", true);
+  }
+}
+
+function lockApp(){
+  aesKey = null;
+  sessions = [];
+  matchRecords = [];
+  trainingRecords = [];
+  goals = {batting:8,bowling:8,fielding:8,fitness:8};
+  holidays = {weeklyDays:[], dates:[]};
+  editingId = null;
+  formCategories = {batting:false,bowling:false,fielding:false,fitness:false};
+  formRatings = {};
+  $("#app").classList.add("hidden");
+  $("#lockOverlay").classList.remove("hidden");
+  $("#lockError").textContent = "";
+  switchView("dashboard");
+}
+
+async function loadAllData(){
+  const sessionRecords = await dbGetAll("sessions");
+  sessions = [];
+  for(const rec of sessionRecords){
+    try{
+      const obj = await decryptObj(aesKey, {iv:rec.iv, data:rec.data});
+      sessions.push(obj);
+    }catch(e){ /* skip corrupt record */ }
+  }
+  sessions.sort((a,b)=> b.date.localeCompare(a.date) || (b.createdAt||0)-(a.createdAt||0));
+
+  const goalsRec = await dbGet("meta","goals");
+  if(goalsRec){
+    try{ goals = await decryptObj(aesKey, {iv:goalsRec.iv, data:goalsRec.data}); }
+    catch(e){ /* keep defaults */ }
+  }else{
+    goals = {batting:8,bowling:8,fielding:8,fitness:8};
+  }
+
+  const holidaysRec = await dbGet("meta","holidays");
+  if(holidaysRec){
+    try{
+      const h = await decryptObj(aesKey, {iv:holidaysRec.iv, data:holidaysRec.data});
+      holidays = {
+        weeklyDays: Array.isArray(h.weeklyDays) ? h.weeklyDays : [],
+        dates: Array.isArray(h.dates) ? h.dates : []
+      };
+    }catch(e){ /* keep defaults */ }
+  }else{
+    holidays = {weeklyDays:[], dates:[]};
+  }
+}
+
+async function persistGoals(){
+  const payload = await encryptObj(aesKey, goals);
+  await dbPut("meta", {key:"goals", iv:payload.iv, data:payload.data});
+  scheduleAutoBackup();
+}
+
+async function persistHolidays(){
+  const payload = await encryptObj(aesKey, holidays);
+  await dbPut("meta", {key:"holidays", iv:payload.iv, data:payload.data});
+  scheduleAutoBackup();
+}
+
+
+/* ============================= V2 FEATURES ============================= */
+async function persistV2Meta(key,val){ try{ const payload=await encryptObj(aesKey,val); await dbPut("meta",{key,iv:payload.iv,data:payload.data}); }catch(e){ safeSet("ct_v2_"+key,JSON.stringify(val)); } }
+async function loadV2Meta(){
+  try{
+    const [mr,mt,al]=await Promise.all([dbGet("meta","matches"),dbGet("meta","trainingRecords"),dbGet("meta","autoLockMinutes")]);
+    if(mr?.data) matchRecords=await decryptObj(aesKey,{iv:mr.iv,data:mr.data})||[];
+    if(mt?.data) trainingRecords=await decryptObj(aesKey,{iv:mt.iv,data:mt.data})||[];
+    if(al?.data) autoLockMinutes=Number(await decryptObj(aesKey,{iv:al.iv,data:al.data}))||0;
+  }catch(e){
+    try{matchRecords=JSON.parse(safeGet("ct_v2_matches")||"[]")}catch{} try{trainingRecords=JSON.parse(safeGet("ct_v2_training")||"[]")}catch{}
+  }
+}
+async function saveMatches(){await persistV2Meta("matches",matchRecords); scheduleAutoBackup()}
+async function saveTraining(){await persistV2Meta("trainingRecords",trainingRecords); scheduleAutoBackup()}
+function esc(v){return String(v??"").replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function matchSR(m){return m.balls?((m.runs/m.balls)*100):0}
+function matchEco(m){return m.overs?m.runsConceded/m.overs:0}
+function renderMatches(){
+  const batting=matchRecords.reduce((a,m)=>a+m.runs,0), wickets=matchRecords.reduce((a,m)=>a+m.wickets,0), catches=matchRecords.reduce((a,m)=>a+m.catches,0);
+  const balls=matchRecords.reduce((a,m)=>a+m.balls,0), rc=matchRecords.reduce((a,m)=>a+m.runsConceded,0), overs=matchRecords.reduce((a,m)=>a+m.overs,0);
+  const k=[['Matches',matchRecords.length],['Runs',batting],['Strike Rate',balls?(batting/balls*100).toFixed(1):'—'],['Wickets',wickets],['Economy',overs?(rc/overs).toFixed(2):'—'],['Catches',catches]];
+  $("#matchKpis").innerHTML=k.map(x=>`<div class="v2-card"><div class="v2-muted">${x[0]}</div><div class="v2-big">${x[1]}</div></div>`).join('');
+  const list=$("#matchList"); if(!matchRecords.length){list.innerHTML='<div class="v2-empty">No matches recorded yet. Add your first match above.</div>';return}
+  list.innerHTML=[...matchRecords].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(m=>`<div class="v2-row"><div><strong>${esc(m.location||'Match')}</strong><div class="v2-muted">${esc(m.date||'')} · ${esc(m.result||'No Result')} · ${m.matchOvers||0} overs</div><div class="v2-muted">🏏 ${m.runs||0} (${m.balls||0}) · SR ${matchSR(m).toFixed(1)} &nbsp; 🎯 ${m.wickets||0} wkts · ${m.catches||0} catches</div></div><button class="btn btn-danger btn-sm" data-del-match="${m.id}">Delete</button></div>`).join('');
+  $all('[data-del-match]').forEach(b=>b.onclick=async()=>{matchRecords=matchRecords.filter(m=>m.id!==b.dataset.delMatch);await saveMatches();renderMatches();renderDashboard()});
+}
+function getValidSessionRecords(){
+  const coaching = sessions.filter(s=>!s.isHoliday);
+  const training = trainingRecords.filter(t=>!t.isHoliday);
+  return {coaching, training};
+}
+function getTotalSessionCount(){
+  const {coaching,training}=getValidSessionRecords();
+  return coaching.length + training.length;
+}
+function getActiveDayCount(){
+  const {coaching,training}=getValidSessionRecords();
+  const dates=new Set();
+  coaching.forEach(s=>{if(s.date)dates.add(s.date)});
+  training.forEach(t=>{if(t.date)dates.add(t.date)});
+  return dates.size;
+}
+function openMatchForm(){
+  switchView('matches');
+  const card=$("#matchFormCard");
+  if(card){card.style.display='block';$("#mDate").value=todayISO();setTimeout(()=>$("#mLocation")?.focus(),0);}
+}
+function renderV2Dashboard(){
+  const el=$("#v2DashboardEnhancement"); if(!el)return;
+  el.style.display=(currentView==="dashboard")?'block':'none';
+  const totalSessions=getTotalSessionCount(), totalMatches=matchRecords.length;
+  const runs=matchRecords.reduce((a,m)=>a+m.runs,0), wk=matchRecords.reduce((a,m)=>a+m.wickets,0);
+  const milestones=[10,25,50,100,250].find(n=>totalSessions<n);
+  const next=milestones||500, pct=Math.min(100,Math.round(totalSessions/next*100));
+  el.innerHTML=`<div class="v2-section-title"><h2>🏏 Matches Record</h2></div><div class="v2-grid"><div class="v2-card"><div class="v2-muted">Matches</div><div class="v2-big">${totalMatches}</div></div><div class="v2-card"><div class="v2-muted">Runs</div><div class="v2-big">${runs}</div></div><div class="v2-card"><div class="v2-muted">Wickets</div><div class="v2-big">${wk}</div></div></div><div class="v2-card"><div class="v2-section-title"><h3>🏅 Next Session Milestone</h3><span class="v2-kpi">${totalSessions}/${next}</span></div><div class="v2-bar"><i style="width:${pct}%"></i></div><div class="v2-muted" style="margin-top:8px">${next-totalSessions} more session${next-totalSessions===1?'':'s'} to reach the milestone.</div></div>`;
+}
+function setupV2(){
+  const mb=$("#addMatchBtn"); if(mb)mb.onclick=openMatchForm;
+  const cb=$("#cancelMatchBtn"); if(cb)cb.onclick=()=>$("#matchFormCard").style.display='none';
+  const sb=$("#saveMatchBtn"); if(sb)sb.onclick=async()=>{
+    const num=id=>Math.max(0,Number($(id).value)||0);
+    const m={id:uid(),date:$("#mDate").value||todayISO(),location:$("#mLocation").value.trim(),result:$("#mResult").value,matchOvers:num("#mMatchOvers"),runs:num("#mRuns"),balls:num("#mBalls"),fours:num("#mFours"),sixes:num("#mSixes"),overs:num("#mOvers"),economy:num("#mEconomy"),wickets:num("#mWickets"),runsConceded:num("#mRunsConceded"),extras:num("#mExtras"),catches:num("#mCatches"),fieldDismissals:num("#mDismissalsField"),notes:$("#mNotes").value.trim(),createdAt:Date.now()};
+    matchRecords.push(m); await saveMatches(); $("#matchFormCard").style.display='none';
+    [...document.querySelectorAll('#matchFormCard input,#matchFormCard textarea')].forEach(x=>{if(x.type!=='date')x.value=''});
+    renderMatches(); renderV2Dashboard(); renderDashboard(); toast('Match saved.');
+  };
+  renderMatches(); renderV2Dashboard();
+  window.addEventListener('online',()=>$("#v2Offline")?.classList.remove('show'));window.addEventListener('offline',()=>$("#v2Offline")?.classList.add('show'));if(!navigator.onLine)$("#v2Offline")?.classList.add('show');
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e});
+  document.addEventListener('click',()=>{lastActivityAt=Date.now()},{passive:true});
+  setInterval(()=>{if(autoLockMinutes>0 && Date.now()-lastActivityAt>autoLockMinutes*60000 && $("#lockOverlay")?.classList.contains('hidden')){lastActivityAt=Date.now(); lockApp();}},30000);
+}
+
+/* ============================= NAVIGATION ============================= */
+function switchView(view){
+  currentView = view;
+  $all(".view").forEach(v=>v.classList.remove("active"));
+  $("#view-"+view).classList.add("active");
+  $all(".nav-link").forEach(b=>b.classList.toggle("active", b.dataset.view===view));
+  $("#mainNav").classList.remove("open");
+  if(view==="dashboard") { renderDashboard(); renderV2Dashboard(); }
+  else { const journeyPanel=$("#v2DashboardEnhancement"); if(journeyPanel) journeyPanel.style.display='none'; }
+  if(view==="newlog" && editingId===null) resetEditor();
+  if(view==="journal") renderJournal();
+  if(view==="progress") renderProgress();
+  if(view==="settings") { renderSettings(); const goalsCard=$("#goalsList")?.closest('.settings-card'); if(goalsCard) goalsCard.style.display='block'; }
+  if(view==="matches") renderMatches();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+/* ============================= COMPUTATIONS ============================= */
+function sessionAvg(s){
+  const vals = CATEGORIES.filter(c=>s.categories[c]).map(c=>s.ratings[c]).filter(v=>typeof v==="number");
+  if(!vals.length) return null;
+  return vals.reduce((a,b)=>a+b,0)/vals.length;
+}
+function totalMinutes(){ return sessions.filter(s=>!s.isHoliday).reduce((a,s)=>a+(Number(s.duration)||0),0); }
+function overallAvgRating(){
+  const avgs = sessions.map(sessionAvg).filter(v=>v!==null);
+  if(!avgs.length) return null;
+  return avgs.reduce((a,b)=>a+b,0)/avgs.length;
+}
+function isHoliday(dateIso){
+  if(!holidays) return false;
+  const dow = new Date(dateIso+"T00:00:00").getDay();
+  if(holidays.weeklyDays && holidays.weeklyDays.includes(dow)) return true;
+  if(holidays.dates && holidays.dates.some(h=>h.date===dateIso)) return true;
+  return false;
+}
+function holidayLabelFor(dateIso){
+  if(!holidays || !holidays.dates) return null;
+  const found = holidays.dates.find(h=>h.date===dateIso);
+  return found ? found.label : null;
+}
+function nonHolidayGapDays(lastDateIso){
+  const d = new Date(lastDateIso+"T00:00:00");
+  d.setDate(d.getDate()+1);
+  const today = new Date(todayISO()+"T00:00:00");
+  let count = 0;
+  while(d <= today){
+    if(!isHoliday(fmtDateISO(d))) count++;
+    d.setDate(d.getDate()+1);
+  }
+  return count;
+}
+function categorySeries(cat){
+  return sessions
+    .filter(s=>s.categories[cat] && typeof s.ratings[cat]==="number")
+    .slice()
+    .sort((a,b)=> a.date.localeCompare(b.date) || (a.createdAt||0)-(b.createdAt||0))
+    .map(s=>({date:s.date, rating:s.ratings[cat]}));
+}
+function overallSeries(){
+  return sessions
+    .slice()
+    .sort((a,b)=> a.date.localeCompare(b.date) || (a.createdAt||0)-(b.createdAt||0))
+    .map(s=>({date:s.date, rating:sessionAvg(s)}))
+    .filter(p=>p.rating!==null);
+}
+function seriesStats(series){
+  if(!series.length) return {baseline:null, last5:null, delta:null};
+  const baseCount = Math.min(3, series.length);
+  const baseline = series.slice(0,baseCount).reduce((a,p)=>a+p.rating,0)/baseCount;
+  const lastCount = Math.min(5, series.length);
+  const last5 = series.slice(-lastCount).reduce((a,p)=>a+p.rating,0)/lastCount;
+  return {baseline, last5, delta: last5-baseline};
+}
+
+/* ============================= DASHBOARD RENDER ============================= */
+function renderDashboard(){
+  const now = new Date();
+  $("#dashEyebrow").textContent = sessions.length ? "Welcome back" : "Let's get started";
+  $("#dashDate").textContent = now.toLocaleDateString(undefined,{weekday:"long", year:"numeric", month:"long", day:"numeric"});
+
+  $("#statSessions").textContent = getTotalSessionCount();
+  $("#statDays").textContent = getActiveDayCount();
+  const mins = totalMinutes();
+  $("#statTime").textContent = Math.floor(mins/60)+"h "+(mins%60)+"m";
+  $("#statTimeSub").textContent = mins+" minutes total";
+  const avg = overallAvgRating();
+  $("#statAvg").textContent = avg===null ? "–" : round1(avg);
+
+  $("#insightsList").innerHTML = buildInsights().map(t=>"<li>"+t+"</li>").join("");
+
+  const recent = sessions.slice(0,4);
+  const wrap = $("#recentSessions");
+  if(!recent.length){
+    wrap.innerHTML = emptyStateHTML("No sessions logged yet.", "Tap “+ New Coaching Log” to record your first practice.");
+  }else{
+    wrap.innerHTML = recent.map(s=>sessionCardHTML(s,false)).join("");
+    bindSessionCardEvents(wrap);
+  }
+  renderV2Dashboard();
+}
+
+function buildInsights(){
+  const list = [];
+  if(isHoliday(todayISO())){
+    const label = holidayLabelFor(todayISO());
+    list.push("📅 Today is marked as a <strong>holiday</strong>"+(label?" ("+escapeHtml(label)+")":"")+" — it is excluded from active-day counts.");
+  }
+  if(!sessions.length && !trainingRecords.length){
+    list.push("Log your first coaching session to start building your development history.");
+    list.push("CricTracker will surface trends, strengths and focus areas automatically once you have a few logs.");
+    return list;
+  }
+
+  const lastSession = sessions[0];
+  const trainingDaysSince = nonHolidayGapDays(lastSession.date);
+  if(trainingDaysSince >= 5) list.push("It's been "+trainingDaysSince+" training day(s) since your last logged session ("+fmtDateShort(lastSession.date)+"), holidays excluded. Consider scheduling your next one.");
+  else if(lastSession.isGameDay) list.push("Your last logged session ("+fmtDateShort(lastSession.date)+") was a <strong>Game Day</strong> — pure play, good for keeping things fun.");
+
+  const catInsights = [];
+  CATEGORIES.forEach(cat=>{
+    const series = categorySeries(cat);
+    if(series.length >= 2){
+      const {baseline,last5,delta} = seriesStats(series);
+      catInsights.push({cat, delta, last5, count:series.length});
+    }
+  });
+  if(catInsights.length){
+    const best = catInsights.slice().sort((a,b)=>b.delta-a.delta)[0];
+    const worst = catInsights.slice().sort((a,b)=>a.delta-b.delta)[0];
+    if(best.delta > 0.2) list.push("<strong>"+CAT_LABELS[best.cat]+"</strong> shows the strongest improvement, up "+round1(best.delta)+" pts vs your baseline.");
+    if(worst.delta < -0.2 && worst.cat!==best.cat) list.push("<strong>"+CAT_LABELS[worst.cat]+"</strong> has dipped "+round1(Math.abs(worst.delta))+" pts — might be worth extra focus next session.");
+    const lowest = catInsights.slice().sort((a,b)=>a.last5-b.last5)[0];
+    if(lowest) list.push("Your current weakest area by average rating is <strong>"+CAT_LABELS[lowest.cat]+"</strong> ("+round1(lowest.last5)+"/10 recent avg).");
+  }
+
+  Object.keys(goals).forEach(cat=>{
+    const series = categorySeries(cat);
+    if(series.length){
+      const {last5} = seriesStats(series);
+      const target = goals[cat];
+      if(target && last5 >= target) list.push("🎯 You've hit your target rating for <strong>"+CAT_LABELS[cat]+"</strong> ("+round1(last5)+"/"+target+").");
+    }
+  });
+
+  if(!list.length) list.push("Keep logging sessions — insights get sharper the more data you track.");
+  return list;
+}
+
+function emptyStateHTML(title, sub){
+  return '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="12" cy="12" r="9"/><path d="M9 12h6M12 9v6"/></svg>'+
+    '<div style="font-weight:700;color:var(--ink-dim);margin-bottom:6px;">'+title+'</div>'+
+    '<div style="font-size:13px;">'+sub+'</div></div>';
+}
+
+/* ============================= SESSION CARD ============================= */
+function sessionCardHTML(s, expandable){
+  const avg = sessionAvg(s);
+  const cats = CATEGORIES.filter(c=>s.categories[c]);
+  const tags = (s.tags||[]);
+  const badges = s.isHoliday
+    ? '<span class="badge holiday-badge">🌧️ Holiday</span>'
+    : s.isGameDay
+      ? '<span class="badge game-badge">🎮 Game Day</span>'
+      : cats.map(c=>'<span class="badge">'+CAT_LABELS[c]+'</span>').join('');
+  const pillContent = avg===null ? (s.isHoliday ? '🌧️' : (s.isGameDay ? '🎮' : '–')) : round1(avg);
+  return (
+  '<div class="session-card" data-id="'+s.id+'">'+
+    '<div class="session-top" data-toggle="'+s.id+'">'+
+      '<div class="session-meta">'+
+        '<div class="session-date">'+fmtDateShort(s.date)+'</div>'+
+        '<div class="session-ground">'+(s.ground?escapeHtml(s.ground):'No location noted')+' · '+(s.duration||0)+' min</div>'+
+        '<div class="session-badges">'+badges+'</div>'+
+      '</div>'+
+      '<div class="avg-pill">'+pillContent+'</div>'+
+    '</div>'+
+    '<div class="session-body" id="body-'+s.id+'">'+
+      (s.isHoliday ? qaBlock("Reason for holiday", s.holidayReason) : '')+
+      qaBlock("What happened", s.whatHappened)+
+      qaBlock("Coach's feedback", s.coachFeedback)+
+      qaBlock("What went well", s.wentWell)+
+      qaBlock("What went wrong", s.wentWrong)+
+      qaBlock("What I learned", s.learned)+
+      qaBlock("To improve", s.improve)+
+      qaBlock("Next session goal", s.nextGoal)+
+      (tags.length? '<div style="margin-top:8px;">'+tags.map(t=>'<span class="tag-pill">#'+escapeHtml(t)+'</span>').join('')+'</div>' : '')+
+      '<div class="session-actions">'+
+        '<button class="btn btn-ghost btn-sm" data-edit="'+s.id+'">Edit</button>'+
+        '<button class="btn btn-danger btn-sm" data-del="'+s.id+'">Delete</button>'+
+      '</div>'+
+    '</div>'+
+  '</div>');
+}
+function qaBlock(label, val){
+  if(!val) return "";
+  return '<div class="qa"><strong>'+label+'</strong>'+escapeHtml(val)+'</div>';
+}
+function escapeHtml(str){
+  const d = document.createElement("div");
+  d.textContent = str==null? "" : String(str);
+  return d.innerHTML;
+}
+function bindSessionCardEvents(root){
+  $all("[data-toggle]", root).forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const id = el.dataset.toggle;
+      const body = $("#body-"+id, root);
+      if(body) body.classList.toggle("open");
+    });
+  });
+  $all("[data-edit]", root).forEach(el=>{
+    el.addEventListener("click", (e)=>{ e.stopPropagation(); loadSessionIntoEditor(el.dataset.edit); });
+  });
+  $all("[data-del]", root).forEach(el=>{
+    el.addEventListener("click", (e)=>{ e.stopPropagation(); confirmDeleteSession(el.dataset.del); });
+  });
+}
+
+/* ============================= NEW LOG / EDITOR ============================= */
+function resetEditor(){
+  editingId = null;
+  formCategories = {batting:false,bowling:false,fielding:false,fitness:false};
+  formRatings = {};
+  $("#editorTitle").textContent = "New Coaching Log";
+  $("#fDate").value = todayISO();
+  $("#fGround").value = "";
+  $("#fDuration").value = "";
+  $("#fIsGameDay").checked = false;
+  $("#fIsHoliday").checked = false;
+  $("#fHolidayReason").value = "";
+  $("#fWhatHappened").value = "";
+  $("#fCoachFeedback").value = "";
+  $("#fWentWell").value = "";
+  $("#fWentWrong").value = "";
+  $("#fLearned").value = "";
+  $("#fImprove").value = "";
+  $("#fNextGoal").value = "";
+  $("#fTags").value = "";
+  applyGameDayVisibility(false);
+  applyHolidayVisibility(false);
+  renderCategoryChecks();
+  renderRatingPanels();
+}
+
+function applyGameDayVisibility(isGameDay){
+  $("#focusAreasSection").classList.toggle("hidden", isGameDay || $("#fIsHoliday").checked);
+  $("#gameDayCheck").classList.toggle("checked", isGameDay);
+}
+
+function applyHolidayVisibility(isHoliday){
+  $("#holidayReasonSection").classList.toggle("hidden", !isHoliday);
+  $("#holidayCheck").classList.toggle("checked", isHoliday);
+  $("#focusAreasSection").classList.toggle("hidden", isHoliday || $("#fIsGameDay").checked);
+}
+
+function renderCategoryChecks(){
+  const wrap = $("#categoryChecks");
+  wrap.innerHTML = CATEGORIES.map(c=>{
+    const checked = formCategories[c];
+    return '<label class="cat-check'+(checked?' checked':'')+'" data-cat="'+c+'">'+
+      '<input type="checkbox" data-catcheck="'+c+'" '+(checked?'checked':'')+'>'+
+      CAT_LABELS[c]+
+      '</label>';
+  }).join("");
+  $all("[data-catcheck]", wrap).forEach(inp=>{
+    inp.addEventListener("change", ()=>{
+      const cat = inp.dataset.catcheck;
+      formCategories[cat] = inp.checked;
+      if(!inp.checked) delete formRatings[cat];
+      else if(!formRatings[cat]) formRatings[cat] = null;
+      renderCategoryChecks();
+      renderRatingPanels();
+    });
+  });
+}
+
+function renderRatingPanels(){
+  const wrap = $("#ratingPanels");
+  const active = CATEGORIES.filter(c=>formCategories[c]);
+  if(!active.length){ wrap.innerHTML = ""; return; }
+  wrap.innerHTML = active.map(c=>{
+    const picked = formRatings[c];
+    const scale = Array.from({length:10},(_,i)=>i+1).map(n=>
+      '<button type="button" class="rate-btn'+(picked===n?' selected':'')+'" data-rate-cat="'+c+'" data-rate-val="'+n+'">'+n+'</button>'
+    ).join("");
+    return '<div class="rating-panel">'+
+      '<div class="cat-name">'+CAT_LABELS[c]+' Rating <span class="picked">'+(picked?picked+'/10':'not rated')+'</span></div>'+
+      '<div class="rating-scale">'+scale+'</div>'+
+    '</div>';
+  }).join("");
+  $all("[data-rate-cat]", wrap).forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const cat = btn.dataset.rateCat;
+      const val = Number(btn.dataset.rateVal);
+      formRatings[cat] = (formRatings[cat]===val) ? null : val;
+      renderRatingPanels();
+    });
+  });
+}
+
+function loadSessionIntoEditor(id){
+  const s = sessions.find(x=>x.id===id);
+  if(!s) return;
+  editingId = id;
+  $("#editorTitle").textContent = "Edit Coaching Log";
+  $("#fDate").value = s.date;
+  $("#fGround").value = s.ground||"";
+  $("#fDuration").value = s.duration||"";
+  $("#fWhatHappened").value = s.whatHappened||"";
+  $("#fCoachFeedback").value = s.coachFeedback||"";
+  $("#fWentWell").value = s.wentWell||"";
+  $("#fWentWrong").value = s.wentWrong||"";
+  $("#fLearned").value = s.learned||"";
+  $("#fImprove").value = s.improve||"";
+  $("#fNextGoal").value = s.nextGoal||"";
+  $("#fTags").value = (s.tags||[]).join(", ");
+  $("#fIsGameDay").checked = !!s.isGameDay;
+  $("#fIsHoliday").checked = !!s.isHoliday;
+  $("#fHolidayReason").value = s.holidayReason||"";
+  applyGameDayVisibility(!!s.isGameDay);
+  applyHolidayVisibility(!!s.isHoliday);
+  formCategories = {batting:false,bowling:false,fielding:false,fitness:false};
+  formRatings = {};
+  CATEGORIES.forEach(c=>{
+    if(s.categories[c]){ formCategories[c] = true; formRatings[c] = s.ratings[c]; }
+  });
+  renderCategoryChecks();
+  renderRatingPanels();
+  switchView("newlog");
+}
+
+async function saveLog(){
+  const date = $("#fDate").value || todayISO();
+  const ground = $("#fGround").value.trim();
+  const duration = Number($("#fDuration").value)||0;
+  const isHoliday = $("#fIsHoliday").checked;
+  const isGameDay = $("#fIsGameDay").checked && !isHoliday;
+  const activeCats = (isGameDay || isHoliday) ? [] : CATEGORIES.filter(c=>formCategories[c]);
+
+  let holidayReason = "";
+  if(isHoliday){
+    holidayReason = $("#fHolidayReason").value.trim();
+    if(!holidayReason){ toast("Please enter a reason for the holiday before saving.", true); return; }
+  }
+
+  if(!isGameDay && !isHoliday){
+    if(!activeCats.length){ toast("Select at least one focus area, or mark this as a Game Day.", true); return; }
+    for(const c of activeCats){
+      if(!formRatings[c]){ toast("Please rate every selected category ("+CAT_LABELS[c]+").", true); return; }
+    }
+  }
+
+  const categories = {};
+  const ratings = {};
+  CATEGORIES.forEach(c=>{
+    const on = !isGameDay && !isHoliday && !!formCategories[c];
+    categories[c] = on;
+    if(on) ratings[c] = formRatings[c];
+  });
+
+  const tags = $("#fTags").value.split(",").map(t=>t.trim()).filter(Boolean);
+
+  const obj = {
+    id: editingId || uid(),
+    date, ground, duration,
+    isGameDay, isHoliday, holidayReason,
+    categories, ratings,
+    whatHappened: $("#fWhatHappened").value.trim(),
+    coachFeedback: $("#fCoachFeedback").value.trim(),
+    wentWell: $("#fWentWell").value.trim(),
+    wentWrong: $("#fWentWrong").value.trim(),
+    learned: $("#fLearned").value.trim(),
+    improve: $("#fImprove").value.trim(),
+    nextGoal: $("#fNextGoal").value.trim(),
+    tags,
+    createdAt: editingId ? (sessions.find(s=>s.id===editingId)?.createdAt || Date.now()) : Date.now()
+  };
+
+  const payload = await encryptObj(aesKey, obj);
+  await dbPut("sessions", {id:obj.id, iv:payload.iv, data:payload.data});
+
+  const idx = sessions.findIndex(s=>s.id===obj.id);
+  if(idx>=0) sessions[idx] = obj; else sessions.unshift(obj);
+  sessions.sort((a,b)=> b.date.localeCompare(a.date) || (b.createdAt||0)-(a.createdAt||0));
+
+  // Keep the holidays record in sync: this log is the single source of truth
+  // for any specific-date holiday it represents.
+  holidays.dates = holidays.dates.filter(h=>h.sourceSessionId!==obj.id);
+  if(isHoliday){
+    holidays.dates.push({date:obj.date, label:holidayReason, sourceSessionId:obj.id});
+  }
+  await persistHolidays();
+
+  toast(editingId ? "Coaching log updated." : "Coaching log saved.");
+  editingId = null;
+  switchView("dashboard");
+}
+
+async function confirmDeleteSession(id){
+  openModal(
+    "Delete this session?",
+    "<p style='font-size:13.5px;color:var(--ink-dim);'>This coaching log will be permanently removed. This cannot be undone.</p>",
+    [
+      {label:"Cancel", cls:"btn-ghost"},
+      {label:"Delete", cls:"btn-danger", action: async ()=>{
+        await dbDelete("sessions", id);
+        scheduleAutoBackup();
+        sessions = sessions.filter(s=>s.id!==id);
+        const hadHoliday = holidays.dates.some(h=>h.sourceSessionId===id);
+        if(hadHoliday){
+          holidays.dates = holidays.dates.filter(h=>h.sourceSessionId!==id);
+          await persistHolidays();
+        }
+        toast("Session deleted.");
+        renderAll();
+      }}
+    ]
+  );
+}
+
+/* ============================= JOURNAL VIEW ============================= */
+const GAMEDAY_FILTER = "__gameday__";
+const HOLIDAY_FILTER = "__holiday__";
+function renderFilterChips(){
+  const wrap = $("#filterChips");
+  const catChips = CATEGORIES.map(c=>
+    '<button type="button" class="filter-chip'+(activeFilters.has(c)?' active':'')+'" data-filter="'+c+'">'+CAT_LABELS[c]+'</button>'
+  ).join("");
+  const gameChip = '<button type="button" class="filter-chip'+(activeFilters.has(GAMEDAY_FILTER)?' active':'')+'" data-filter="'+GAMEDAY_FILTER+'">🎮 Game Day</button>';
+  const holidayChip = '<button type="button" class="filter-chip'+(activeFilters.has(HOLIDAY_FILTER)?' active':'')+'" data-filter="'+HOLIDAY_FILTER+'">🌧️ Holiday</button>';
+  wrap.innerHTML = catChips + gameChip + holidayChip;
+  $all("[data-filter]", wrap).forEach(chip=>{
+    chip.addEventListener("click", ()=>{
+      const c = chip.dataset.filter;
+      if(activeFilters.has(c)) activeFilters.delete(c); else activeFilters.add(c);
+      renderJournal();
+    });
+  });
+}
+
+function filteredSessions(){
+  const q = ($("#searchInput").value||"").toLowerCase().trim();
+  return sessions.filter(s=>{
+    if(activeFilters.size){
+      const match = Array.from(activeFilters).some(f=>{
+        if(f===GAMEDAY_FILTER) return !!s.isGameDay;
+        if(f===HOLIDAY_FILTER) return !!s.isHoliday;
+        return s.categories[f];
+      });
+      if(!match) return false;
+    }
+    if(!q) return true;
+    const haystack = [s.ground, s.whatHappened, s.coachFeedback, s.wentWell, s.wentWrong, s.learned, s.improve, s.nextGoal, s.holidayReason, (s.tags||[]).join(" ")]
+      .join(" ").toLowerCase();
+    return haystack.includes(q);
+  });
+}
+
+function renderJournal(){
+  renderFilterChips();
+  $("#listViewBtn").classList.toggle("active", journalMode==="list");
+  $("#calViewBtn").classList.toggle("active", journalMode==="calendar");
+  $("#journalListWrap").classList.toggle("hidden", journalMode!=="list");
+  $("#journalCalWrap").classList.toggle("hidden", journalMode!=="calendar");
+
+  if(journalMode==="list"){
+    const list = filteredSessions();
+    const wrap = $("#journalList");
+    if(!list.length){
+      wrap.innerHTML = emptyStateHTML("No matching sessions.", "Try a different search term or clear your filters.");
+    }else{
+      wrap.innerHTML = list.map(s=>sessionCardHTML(s,true)).join("");
+      bindSessionCardEvents(wrap);
+    }
+  }else{
+    renderCalendar();
+  }
+}
+
+function renderCalendar(){
+  const year = calCursor.getFullYear();
+  const month = calCursor.getMonth();
+  $("#calTitle").textContent = calCursor.toLocaleDateString(undefined,{month:"long", year:"numeric"});
+
+  const list = filteredSessions();
+  const byDate = {};
+  list.forEach(s=>{ (byDate[s.date] = byDate[s.date]||[]).push(s); });
+
+  const firstDay = new Date(year, month, 1);
+  const startOffset = firstDay.getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const dowLabels = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+  let html = dowLabels.map(d=>'<div class="cal-dow">'+d+'</div>').join("");
+  for(let i=0;i<startOffset;i++) html += '<div class="cal-day empty"></div>';
+  const todayStr = todayISO();
+  for(let d=1; d<=daysInMonth; d++){
+    const iso = year+"-"+pad2(month+1)+"-"+pad2(d);
+    const has = byDate[iso];
+    const realSessions = has ? has.filter(s=>!s.isHoliday) : [];
+    const holiday = isHoliday(iso);
+    const isToday = iso===todayStr;
+    const label = holiday ? (holidayLabelFor(iso) || "Holiday") : "";
+    let cls = "cal-day";
+    if(realSessions.length) cls += " has-session";
+    if(holiday) cls += " holiday";
+    if(isToday) cls += " today";
+    let mark = "";
+    if(realSessions.length){
+      const allGame = realSessions.every(s=>s.isGameDay);
+      mark = '<span class="dot'+(allGame?' game-dot':'')+'"></span>';
+    }else if(holiday){
+      mark = '<span class="hmark">H</span>';
+    }
+    html += '<div class="'+cls+'" '+(has?'data-day="'+iso+'"':'')+(holiday?' title="'+escapeHtml(label)+'"':'')+'>'+
+      '<span class="dnum">'+d+'</span>'+mark+
+    '</div>';
+  }
+  $("#calGrid").innerHTML = html;
+  $all("[data-day]", $("#calGrid")).forEach(el=>{
+    el.addEventListener("click", ()=>showDayModal(el.dataset.day, byDate[el.dataset.day]));
+  });
+}
+
+function showDayModal(dateIso, daySessions){
+  const body = daySessions.map(s=>sessionCardHTML(s,true)).join("");
+  openModal(fmtDatePretty(dateIso), '<div class="session-list">'+body+'</div>', [{label:"Close", cls:"btn-ghost"}]);
+  bindSessionCardEvents($("#modalRoot"));
+}
+
+/* ============================= PROGRESS VIEW ============================= */
+function renderProgress(){
+  const overall = overallSeries();
+  const overallStats = seriesStats(overall);
+  const summary = $("#progressSummary");
+  summary.innerHTML =
+    statBlock("Baseline", overallStats.baseline) +
+    statBlock("Last 5 Avg", overallStats.last5) +
+    statBlock("Improvement Δ", overallStats.delta, true);
+
+  const chartsWrap = $("#chartsWrap");
+  let html = "";
+  html += chartCardHTML("Overall Performance", overall, overallStats);
+  CATEGORIES.forEach(c=>{
+    const series = categorySeries(c);
+    if(series.length){
+      html += chartCardHTML(CAT_LABELS[c]+" Rating", series, seriesStats(series));
+    }
+  });
+  if(!overall.length){
+    chartsWrap.innerHTML = emptyStateHTML("No progress data yet.", "Log a few sessions with ratings to see trend charts here.");
+  }else{
+    chartsWrap.innerHTML = html;
+  }
+}
+
+function statBlock(label, val, isDelta){
+  const display = val===null||val===undefined ? "–" : (isDelta ? (val>=0?"+":"")+round1(val) : round1(val));
+  const color = isDelta ? (val>0 ? "var(--success)" : (val<0 ? "var(--danger)" : "var(--ink)")) : "var(--ink)";
+  return '<div class="stat-card"><div class="label">'+label+'</div><div class="value" style="color:'+color+'">'+display+'</div><div class="sub">out of 10</div></div>';
+}
+
+function chartCardHTML(title, series, stats){
+  const svg = buildLineChartSVG(series);
+  return '<div class="chart-card">'+
+    '<h3>'+title+'<span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-dim);">'+
+      (stats.last5!==null? round1(stats.last5)+'/10 recent' : '') +
+    '</span></h3>'+
+    '<div class="chart-meta">Baseline '+(stats.baseline!==null?round1(stats.baseline):'–')+
+      ' · Last 5 Avg '+(stats.last5!==null?round1(stats.last5):'–')+
+      ' · Δ '+(stats.delta!==null?(stats.delta>=0?'+':'')+round1(stats.delta):'–')+'</div>'+
+    svg+
+  '</div>';
+}
+
+function buildLineChartSVG(series){
+  const W = 640, H = 220, padL = 34, padR = 16, padT = 16, padB = 30;
+  const innerW = W-padL-padR, innerH = H-padT-padB;
+  if(!series.length){
+    return '<svg viewBox="0 0 '+W+' '+H+'"><text x="'+(W/2)+'" y="'+(H/2)+'" text-anchor="middle" fill="var(--ink-faint)" font-size="13">No data yet</text></svg>';
+  }
+  const n = series.length;
+  const xFor = (i)=> n===1 ? padL+innerW/2 : padL + (innerW*i/(n-1));
+  const yFor = (v)=> padT + innerH - ((v-1)/9)*innerH;
+
+  let grid = "";
+  for(let g=1; g<=10; g+=3){
+    const y = yFor(g);
+    grid += '<line x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'" stroke="var(--border)" stroke-width="1" stroke-dasharray="3,4"/>';
+    grid += '<text x="'+(padL-8)+'" y="'+(y+3)+'" text-anchor="end" font-size="10" fill="var(--ink-faint)" font-family="JetBrains Mono, monospace">'+g+'</text>';
+  }
+
+  const points = series.map((p,i)=>({x:xFor(i), y:yFor(p.rating)}));
+  const linePath = points.map((p,i)=>(i===0?"M":"L")+p.x.toFixed(1)+","+p.y.toFixed(1)).join(" ");
+  const areaPath = linePath+" L"+points[points.length-1].x.toFixed(1)+","+(padT+innerH)+" L"+points[0].x.toFixed(1)+","+(padT+innerH)+" Z";
+
+  const dots = points.map((p,i)=>
+    '<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="3.5" fill="var(--chart-line)" stroke="var(--card)" stroke-width="1.5">'+
+    '<title>'+fmtDateShort(series[i].date)+": "+series[i].rating+'/10</title></circle>'
+  ).join("");
+
+  const xLabels = [];
+  const labelIdxs = n<=6 ? series.map((_,i)=>i) : [0, Math.floor((n-1)/2), n-1];
+  labelIdxs.forEach(i=>{
+    xLabels.push('<text x="'+xFor(i).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10" fill="var(--ink-faint)" font-family="JetBrains Mono, monospace">'+fmtDateShort(series[i].date)+'</text>');
+  });
+
+  return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'+
+    '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">'+
+      '<stop offset="0%" stop-color="var(--chart-line)" stop-opacity="0.35"/>'+
+      '<stop offset="100%" stop-color="var(--chart-line)" stop-opacity="0"/>'+
+    '</linearGradient></defs>'+
+    grid+
+    '<path d="'+areaPath+'" fill="url(#g)" stroke="none"/>'+
+    '<path d="'+linePath+'" fill="none" stroke="var(--chart-line)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'+
+    dots+
+    xLabels.join("")+
+  '</svg>';
+}
+
+/* ============================= SETTINGS VIEW ============================= */
+const GOAL_LABELS = {batting:"🏏 Batting",bowling:"🎯 Bowling",fielding:"🧤 Fielding",fitness:"💪 Fitness"};
+function renderGoalsSettings(){
+  const wrap = $("#goalsList"); if(!wrap) return;
+  wrap.innerHTML = '<div class="v2-form">' + CATEGORIES.map(c=>{
+    const v = (goals && goals[c]>=1 && goals[c]<=10) ? goals[c] : 8;
+    return '<div><label>'+(GOAL_LABELS[c]||c)+'</label><input type="number" min="1" max="10" step="1" data-goal="'+c+'" value="'+v+'"></div>';
+  }).join('') + '</div>';
+}
+function renderSettings(){
+  updateAccountUI(getV2Account());
+  if(!paletteState)paletteState=getStoredPaletteState();
+  if($("#autoLockSelect"))$("#autoLockSelect").value=String(autoLockMinutes);
+  renderGoalsSettings();
+  renderPaletteSettings();
+  renderHolidaysSettings();
+  updateBackupUI();
+}
+
+async function saveGoals(){
+  CATEGORIES.forEach(c=>{
+    const inp = $('[data-goal="'+c+'"]');
+    const v = Number(inp.value);
+    goals[c] = (v>=1 && v<=10) ? v : (goals[c]||8);
+  });
+  await persistGoals();
+  toast("Goals saved.");
+  renderDashboard();
+}
+
+const DOW_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+function renderHolidaysSettings(){
+  const chipsWrap = $("#weeklyHolidayChips");
+  chipsWrap.innerHTML = DOW_NAMES.map((name,idx)=>{
+    const active = holidays.weeklyDays.includes(idx);
+    return '<button type="button" class="filter-chip'+(active?' active':'')+'" data-dow="'+idx+'">'+name+'</button>';
+  }).join("");
+  $all("[data-dow]", chipsWrap).forEach(chip=>{
+    chip.addEventListener("click", ()=>{
+      const dow = Number(chip.dataset.dow);
+      const idx = holidays.weeklyDays.indexOf(dow);
+      if(idx>=0) holidays.weeklyDays.splice(idx,1); else holidays.weeklyDays.push(dow);
+      renderHolidaysSettings();
+    });
+  });
+}
+
+async function saveHolidays(){
+  await persistHolidays();
+  toast("Holiday settings saved.");
+  renderDashboard();
+  if(currentView==="journal") renderJournal();
+}
+
+async function changePasscode(){
+  const oldPass = $("#oldPass").value;
+  const newPass = $("#newPass").value;
+  const confirmPass = $("#confirmPass").value;
+  if(!oldPass || !newPass){ toast("Please fill in all passcode fields.", true); return; }
+  if(newPass !== confirmPass){ toast("New passcode confirmation does not match.", true); return; }
+  if(newPass.length < 4){ toast("New passcode should be at least 4 characters.", true); return; }
+
+  const storedHash = safeGet("ct_hash");
+  const oldHash = await sha256Hex(oldPass);
+  if(oldHash !== storedHash){ toast("Current passcode is incorrect.", true); return; }
+
+  const newSaltBytes = crypto.getRandomValues(new Uint8Array(16));
+  const newSaltB64 = bufToB64(newSaltBytes);
+  const newKey = await deriveKey(newPass, newSaltB64);
+
+  for(const s of sessions){
+    const payload = await encryptObj(newKey, s);
+    await dbPut("sessions", {id:s.id, iv:payload.iv, data:payload.data});
+  }
+  const goalsPayload = await encryptObj(newKey, goals);
+  await dbPut("meta", {key:"goals", iv:goalsPayload.iv, data:goalsPayload.data});
+
+  const newHash = await sha256Hex(newPass);
+  safeSet("ct_hash", newHash);
+  safeSet("ct_salt", newSaltB64);
+  aesKey = newKey;
+  await persistHolidays();
+  await saveMatches();
+  await saveTraining();
+  await persistV2Meta("autoLockMinutes", autoLockMinutes);
+  scheduleAutoBackup();
+
+  $("#oldPass").value = ""; $("#newPass").value = ""; $("#confirmPass").value = "";
+  toast("Passcode updated successfully.");
+}
+
+async function exportData(){
+  try{
+    const wrapper=await createEncryptedBackupWrapper();
+    const blob=new Blob([JSON.stringify(wrapper,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=url;a.download="CricTracker-ProPlus-"+todayISO()+".json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast("Encrypted backup exported.");
+  }catch(e){toast(e.message||"Could not export backup.",true)}
+}
+async function importData(file){
+  try{
+    if(!aesKey){toast("Unlock CricTracker before importing.",true);return}
+    const raw=JSON.parse(await file.text());let parsed=raw;
+    if(raw?.encrypted&&raw.iv&&raw.data)parsed=await decryptObj(aesKey,{iv:raw.iv,data:raw.data});
+    if(!parsed||!(["CricTracker","CricTracker-ProPlus"].includes(parsed.app))||!Array.isArray(parsed.sessions))throw new Error("Invalid CricTracker-ProPlus JSON data file.");
+    if(!confirm("Restore this backup? Your current local data will be replaced."))return;
+    await clearEncryptedStores();
+    sessions=parsed.sessions.map(s=>({...s,id:s.id||uid()}));goals=parsed.goals&&typeof parsed.goals==="object"?parsed.goals:{batting:8,bowling:8,fielding:8,fitness:8};
+    holidays=parsed.holidays&&typeof parsed.holidays==="object"?parsed.holidays:{weeklyDays:[],dates:[]};
+    matchRecords=Array.isArray(parsed.matchRecords)?parsed.matchRecords.map(m=>({...m,id:m.id||uid()})):[];
+    trainingRecords=Array.isArray(parsed.trainingRecords)?parsed.trainingRecords.map(t=>({...t,id:t.id||uid()})):[];
+    autoLockMinutes=Number(parsed.autoLockMinutes)||0;
+    if(parsed.profile?.name){const account=getV2Account()||{provider:"local",createdAt:new Date().toISOString()};account.name=parsed.profile.name;setV2Account(account);updateAccountUI(account)}
+    if(parsed.theme)applyTheme(parsed.theme);
+    if(parsed.palette){paletteState=normalizePaletteState(parsed.palette);paletteAlphaState=normalizePaletteAlphaState(parsed.paletteAlpha);savePaletteState();savePaletteAlphaState();applyPaletteForCurrentTheme();renderPaletteEditor(false)}
+    for(const ss of sessions){const enc=await encryptObj(aesKey,ss);await dbPut("sessions",{id:ss.id,iv:enc.iv,data:enc.data})}
+    await persistGoals();await persistHolidays();await saveMatches();await saveTraining();await persistV2Meta("autoLockMinutes",autoLockMinutes);
+    renderAll();renderMatches();renderV2Dashboard();renderSettings();scheduleAutoBackup();
+    toast("Backup restored successfully.");
+  }catch(e){toast(e.message||"Could not restore backup.",true)}
+}
+async function wipeAllData(){
+  const confirmVal = $("#wipeConfirmInput").value.trim();
+  if(confirmVal !== "DELETE"){ toast('Type "DELETE" to confirm.', true); return; }
+  openModal(
+    "Wipe all data?",
+    "<p style='font-size:13.5px;color:var(--ink-dim);'>All sessions, goals, and your passcode will be permanently erased from this device. This cannot be undone.</p>",
+    [
+      {label:"Cancel", cls:"btn-ghost"},
+      {label:"Wipe Everything", cls:"btn-danger", action: async ()=>{
+        try{
+          if(window.indexedDB){
+            await new Promise((resolve,reject)=>{
+              const req = indexedDB.deleteDatabase(DB_NAME);
+              req.onsuccess = ()=>resolve();
+              req.onerror = ()=>reject(req.error);
+              req.onblocked = ()=>resolve();
+            });
+          }
+        }catch(e){}
+        safeClearAll();
+        memStore.sessions = [];
+        memStore.meta = [];
+        toast("All data wiped.");
+        setTimeout(()=>location.reload(), 700);
+      }}
+    ]
+  );
+}
+
+/* ============================= MODAL ============================= */
+function openModal(title, bodyHtml, buttons){
+  const root = $("#modalRoot");
+  root.innerHTML =
+    '<div class="modal-backdrop" id="modalBackdrop">'+
+      '<div class="modal-box">'+
+        '<h3>'+title+'</h3>'+
+        bodyHtml+
+        '<div class="modal-close-row" id="modalBtns"></div>'+
+      '</div>'+
+    '</div>';
+  const btnWrap = $("#modalBtns");
+  buttons.forEach(b=>{
+    const btn = document.createElement("button");
+    btn.className = "btn "+b.cls+" btn-sm";
+    btn.textContent = b.label;
+    btn.style.marginLeft = "8px";
+    btn.addEventListener("click", async ()=>{
+      if(b.action) await b.action();
+      closeModal();
+    });
+    btnWrap.appendChild(btn);
+  });
+  $("#modalBackdrop").addEventListener("click", (e)=>{ if(e.target.id==="modalBackdrop") closeModal(); });
+}
+function closeModal(){ $("#modalRoot").innerHTML = ""; }
+
+/* ============================= THEME ============================= */
+const THEME_ORDER = ["dark","light"];
+const THEME_ICONS = {dark:"🌙", light:"☀️"};
+const THEME_NAMES = {dark:"Dark", light:"Light"};
+function applyTheme(theme){
+  if(!THEME_ORDER.includes(theme)) theme = "dark";
+  document.documentElement.setAttribute("data-theme", theme);
+  $("#themeToggle").textContent = THEME_ICONS[theme];
+  $("#themeToggle").title = "Theme: "+THEME_NAMES[theme]+" (click to cycle)";
+  safeSet("ct_theme", theme);
+  if(!paletteState)paletteState=getStoredPaletteState();
+  applyPaletteForCurrentTheme();
+  if(document.getElementById("paletteEditor"))renderPaletteEditor();
+}
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute("data-theme");
+  const idx = THEME_ORDER.indexOf(cur);
+  applyTheme(THEME_ORDER[(idx+1) % THEME_ORDER.length]);
+}
+
+/* ============================= RENDER ALL ============================= */
+function renderAll(){
+  switchView(currentView);
+}
+
+/* ============================= LOCAL PROFILE + AUTOMATIC BACKUP + PALETTE ============================= */
+const V2_ACCOUNT_KEY = "ct_v2_account";
+const BACKUP_FILE_NAME = "CricTracker-ProPlus.json";
+const PALETTE_KEY_PREFIX = "ct_palette_";
+const PALETTE_RECENTS_KEY = "ct_palette_recents";
+const PALETTE_SAVED_KEY = "ct_palette_saved";
+const PALETTE_ALPHA_KEY = "ct_palette_alpha";
+
+const DEFAULT_PALETTES = {
+  dark:{primary:"#3b82f6",secondary:"#2563eb",accent:"#60a5fa",background:"#0b1220",surface:"#111827",text:"#eef4ff",success:"#4CAF50",warning:"#f59e0b",danger:"#e0685f"},
+  light:{primary:"#2563eb",secondary:"#1d4ed8",accent:"#1d6fd1",background:"#f4f8ff",surface:"#ffffff",text:"#172033",success:"#4CAF50",warning:"#f59e0b",danger:"#b8433e"}
+};
+const PALETTE_LABELS={primary:"Primary",secondary:"Secondary",accent:"Accent",background:"Background",surface:"Surface",text:"Text",success:"Success",warning:"Warning",danger:"Danger"};
+let paletteAlphaState={dark:{},light:{}};
+const PALETTE_CSS={primary:"--grass",secondary:"--grass-strong",accent:"--sky",background:"--bg",surface:"--card",text:"--ink",success:"--success",warning:"--gold",danger:"--danger"};
+
+function getV2Account(){try{return JSON.parse(safeGet(V2_ACCOUNT_KEY)||"null")}catch(e){return null}}
+function setV2Account(account){safeSet(V2_ACCOUNT_KEY,JSON.stringify(account))}
+function completeV2Setup(){
+  const name=$("#profileName").value.trim(),p1=$("#setupPasscode").value,p2=$("#setupPasscode2").value,err=$("#accountError");err.textContent="";
+  if(!name){err.textContent="Please enter your name.";return}
+  if(!p1||p1.length<4){err.textContent="Your passcode must be at least 4 characters.";return}
+  if(p1!==p2){err.textContent="The passcodes do not match.";return}
+  const salt=bufToB64(crypto.getRandomValues(new Uint8Array(16)));
+  Promise.all([sha256Hex(p1),saveDefaultPaletteState()]).then(([hash])=>{
+    safeSet("ct_hash",hash);safeSet("ct_salt",salt);
+    const account={provider:"local",name,createdAt:new Date().toISOString()};setV2Account(account);updateAccountUI(account);
+    $("#accountOverlay").classList.add("hidden");$("#passcodeInput").focus();toast("CricTracker profile created.");
+  }).catch(()=>{err.textContent="Could not create the profile. Please try again."});
+}
+function updateAccountUI(account){
+  if($("#profileChip")){$("#profileChip").textContent=account?.name||"";$("#profileChip").style.display=account?.name?"block":"none"}
+  if($("#accountSettingsText"))$("#accountSettingsText").textContent=account?.name?`Local profile: ${account.name}. Your CricTracker data stays on this device.`:"Your CricTracker profile is stored locally on this device.";
+}
+async function initV2AccountGate(){
+  const account=getV2Account();updateAccountUI(account);
+  if(account&&safeGet("ct_hash")&&safeGet("ct_salt")){$("#accountOverlay").classList.add("hidden");$("#passcodeInput").focus()}
+  else{$("#accountOverlay").classList.remove("hidden");$("#profileName").focus()}
+}
+
+/* ---------- Automatic local JSON backup ---------- */
+function backupSupported(){return !!(window.isSecureContext&&window.showSaveFilePicker&&window.showOpenFilePicker)}
+async function requestHandlePermission(handle,write=true){
+  if(!handle)return false;
+  try{
+    const opts={mode:write?"readwrite":"read"};
+    if(handle.queryPermission&&await handle.queryPermission(opts)==="granted")return true;
+    if(handle.requestPermission)return (await handle.requestPermission(opts))==="granted";
+  }catch(e){}
+  return false;
+}
+async function loadBackupHandle(){
+  if(!backupSupported())return null;
+  const saved=await getSavedBackupHandle();
+  if(!saved)return null;
+  backupFileHandle=saved;
+  return saved;
+}
+async function saveBackupHandleLocal(handle){backupFileHandle=handle;await saveBackupHandle(handle)}
+function updateBackupUI(message,state){
+  const text=$("#backupStatusText"),last=$("#backupLastSync"),dot=$("#backupStatusDot"),badge=$("#backupSupportBadge");if(!text||!dot)return;
+  const supported=backupSupported();
+  if(badge){badge.textContent=supported?"ProPlus JSON read/write supported":"Manual backup fallback";badge.className="v2-pill "+(supported?"":"warn")}
+  text.textContent=message||(supported?(backupFileHandle?"ProPlus JSON file connected":"No ProPlus JSON file connected"):"ProPlus JSON read/write is not supported in this browser");
+  if(last)last.textContent=backupLastSync?"Last backup: "+new Date(backupLastSync).toLocaleString():(backupFileHandle?"Ready to save automatically.":"Choose a file to enable automatic backups.");
+  dot.className="backup-dot"+(state==="err"?" err":state==="warn"?" warn":backupFileHandle?" ok":"");
+  const disabled=!backupFileHandle||!aesKey;
+  ["backupNowBtn","restoreConnectedBackupBtn","disconnectBackupBtn"].forEach(id=>{const el=$("#"+id);if(el)el.disabled=disabled});
+  if($("#setBackupFileBtn"))$("#setBackupFileBtn").disabled=!supported;
+  if($("#connectExistingBackupBtn"))$("#connectExistingBackupBtn").disabled=!supported;
+}
+async function chooseNewBackupFile(){
+  if(!backupSupported()){toast("Automatic file backup is not supported by this browser.",true);return}
+  try{
+    const handle=await showSaveFilePicker({suggestedName:BACKUP_FILE_NAME,types:[{description:"CricTracker-ProPlus JSON data file",accept:{"application/json":[".json"]}}]});
+    if(!(await requestHandlePermission(handle,true))){updateBackupUI("Write permission was not granted.","warn");return}
+    await saveBackupHandleLocal(handle);updateBackupUI("ProPlus JSON file connected.","ok");await backupNow(true);toast("ProPlus JSON read/write connected.");
+  }catch(e){if(e?.name!=="AbortError")updateBackupUI("Could not connect the backup file.","err")}
+}
+async function chooseExistingBackupFile(){
+  if(!backupSupported()){toast("Automatic file backup is not supported by this browser.",true);return}
+  try{
+    const [handle]=await showOpenFilePicker({multiple:false,types:[{description:"CricTracker-ProPlus JSON data file",accept:{"application/json":[".json"]}}]});
+    if(!handle)return;
+    if(!(await requestHandlePermission(handle,true))){updateBackupUI("Write permission was not granted.","warn");return}
+    await saveBackupHandleLocal(handle);updateBackupUI("Existing ProPlus JSON file connected.","ok");toast("Existing ProPlus JSON file connected.");
+  }catch(e){if(e?.name!=="AbortError")updateBackupUI("Could not connect the backup file.","err")}
+}
+async function disconnectBackup(){backupFileHandle=null;backupLastSync=null;await clearBackupHandle();safeSet("ct_backup_last_sync","");updateBackupUI("ProPlus JSON read/write disconnected.");toast("ProPlus JSON read/write disconnected.")}
+async function restoreConnectedBackup(){
+  if(!backupFileHandle){toast("Connect a backup file first.",true);return}
+  try{
+    if(!(await requestHandlePermission(backupFileHandle,false))){toast("Backup file permission is not available.",true);return}
+    const file=await backupFileHandle.getFile();
+    await restoreFromBackupFile(file);
+  }catch(e){toast(e.message||"Could not read the connected backup file.",true)}
+}
+function buildBackupPayload(){
+  const account=getV2Account();
+  return {app:"CricTracker-ProPlus",backupVersion:4,exportedAt:new Date().toISOString(),sessions,goals,holidays,matchRecords,trainingRecords,autoLockMinutes,theme:document.documentElement.getAttribute("data-theme")||"dark",palette:paletteState,paletteAlpha:paletteAlphaState,profile:account?{provider:"local",name:account.name||"",createdAt:account.createdAt||null}:null};
+}
+async function createEncryptedBackupWrapper(){
+  if(!aesKey)throw new Error("Unlock CricTracker before creating a backup.");
+  const encrypted=await encryptObj(aesKey,buildBackupPayload());
+  return {app:"CricTracker-ProPlus",backupVersion:4,encrypted:true,algorithm:"AES-GCM",iv:encrypted.iv,data:encrypted.data,updatedAt:new Date().toISOString()};
+}
+async function writeBackupToHandle(handle,wrapper){
+  const writable=await handle.createWritable();
+  try{await writable.write(JSON.stringify(wrapper,null,2));await writable.close()}catch(e){try{await writable.abort()}catch(_){}throw e}
+}
+async function backupNow(silent=false){
+  if(!backupFileHandle||!aesKey)return false;
+  if(backupInFlight){backupPending=true;return false}
+  backupInFlight=true;updateBackupUI("Saving backup…");
+  try{
+    if(!(await requestHandlePermission(backupFileHandle,true)))throw new Error("Backup file permission is no longer available.");
+    const wrapper=await createEncryptedBackupWrapper();await writeBackupToHandle(backupFileHandle,wrapper);
+    backupLastSync=new Date().toISOString();safeSet("ct_backup_last_sync",backupLastSync);updateBackupUI("Backup synced.","ok");
+    if(!silent)toast("CricTracker backup saved.");return true;
+  }catch(e){updateBackupUI(e.message||"Backup failed. Local data is still safe.","err");if(!silent)toast(e.message||"Backup failed. Local data is still safe.",true);return false}
+  finally{backupInFlight=false;if(backupPending){backupPending=false;scheduleAutoBackup()}}
+}
+function scheduleAutoBackup(){if(!backupFileHandle||!aesKey)return;clearTimeout(backupTimer);backupTimer=setTimeout(()=>backupNow(true),1500)}
+async function restoreFromBackupFile(file){
+  try{
+    if(!aesKey){toast("Unlock CricTracker before restoring a backup.",true);return}
+    const raw=JSON.parse(await file.text());let parsed=raw;
+    if(raw?.encrypted&&raw.iv&&raw.data)parsed=await decryptObj(aesKey,{iv:raw.iv,data:raw.data});
+    if(!parsed||!(["CricTracker","CricTracker-ProPlus"].includes(parsed.app))||!Array.isArray(parsed.sessions))throw new Error("Invalid CricTracker-ProPlus JSON data file.");
+    if(!confirm("Restore this backup? Your current local data will be replaced."))return;
+    await clearEncryptedStores();
+    sessions=parsed.sessions.map(x=>({...x,id:x.id||uid()}));goals=parsed.goals||{batting:8,bowling:8,fielding:8,fitness:8};holidays=parsed.holidays||{weeklyDays:[],dates:[]};
+    matchRecords=Array.isArray(parsed.matchRecords)?parsed.matchRecords.map(x=>({...x,id:x.id||uid()})):[];trainingRecords=Array.isArray(parsed.trainingRecords)?parsed.trainingRecords.map(x=>({...x,id:x.id||uid()})):[];
+    autoLockMinutes=Number(parsed.autoLockMinutes)||0;
+    if(parsed.profile?.name){const account=getV2Account()||{provider:"local",createdAt:new Date().toISOString()};account.name=parsed.profile.name;setV2Account(account);updateAccountUI(account)}
+    if(parsed.theme)applyTheme(parsed.theme);
+    if(parsed.palette){paletteState=normalizePaletteState(parsed.palette);paletteAlphaState=normalizePaletteAlphaState(parsed.paletteAlpha);savePaletteState();savePaletteAlphaState();applyPaletteForCurrentTheme();renderPaletteEditor(false)}
+    for(const ss of sessions){const enc=await encryptObj(aesKey,ss);await dbPut("sessions",{id:ss.id,iv:enc.iv,data:enc.data})}
+    await persistGoals();await persistHolidays();await saveMatches();await saveTraining();await persistV2Meta("autoLockMinutes",autoLockMinutes);
+    renderAll();renderMatches();renderV2Dashboard();renderSettings();toast("Backup restored successfully.");
+  }catch(e){toast(e.message||"Could not restore backup.",true)}
+}
+function normalizePaletteState(state){
+  const out={dark:{...DEFAULT_PALETTES.dark},light:{...DEFAULT_PALETTES.light}};
+  for(const theme of ["dark","light"])if(state?.[theme])for(const slot of Object.keys(PALETTE_LABELS)){const v=String(state[theme][slot]||"");if(/^#[0-9a-fA-F]{6}$/.test(v))out[theme][slot]=v.toLowerCase()}
+  return out;
+}
+function normalizePaletteAlphaState(state){
+  const out={dark:{},light:{}};
+  for(const theme of ["dark","light"])for(const slot of Object.keys(PALETTE_LABELS)){const v=Number(state?.[theme]?.[slot]);out[theme][slot]=Number.isFinite(v)?Math.max(0,Math.min(1,v)):1}
+  return out;
+}
+function getStoredPaletteAlphaState(){try{const raw=safeGet(PALETTE_ALPHA_KEY);return raw?normalizePaletteAlphaState(JSON.parse(raw)):normalizePaletteAlphaState(null)}catch(e){return normalizePaletteAlphaState(null)}}
+function savePaletteAlphaState(){safeSet(PALETTE_ALPHA_KEY,JSON.stringify(paletteAlphaState))}
+function getStoredPaletteState(){try{const raw=safeGet(PALETTE_KEY_PREFIX+"state");return raw?normalizePaletteState(JSON.parse(raw)):normalizePaletteState(DEFAULT_PALETTES)}catch(e){return normalizePaletteState(DEFAULT_PALETTES)}}
+function savePaletteState(){safeSet(PALETTE_KEY_PREFIX+"state",JSON.stringify(paletteState))}
+function saveDefaultPaletteState(){paletteState=getStoredPaletteState();paletteAlphaState=getStoredPaletteAlphaState();savePaletteState();savePaletteAlphaState();applyPaletteForCurrentTheme()}
+function applyPaletteForCurrentTheme(){
+  if(!paletteState)paletteState=getStoredPaletteState();
+  if(!paletteAlphaState||!paletteAlphaState.dark)paletteAlphaState=getStoredPaletteAlphaState();
+  const theme=document.documentElement.getAttribute("data-theme")||"dark",pal=paletteState[theme]||DEFAULT_PALETTES[theme],root=document.documentElement;
+  for(const [slot,cssVar] of Object.entries(PALETTE_CSS))root.style.setProperty(cssVar,rgbaFromHex(pal[slot],paletteAlphaState[theme][slot]));
+  root.style.setProperty("--grass-soft",hexToRgba(pal.primary,.16));root.style.setProperty("--sky-soft",hexToRgba(pal.accent,.16));root.style.setProperty("--gold-soft",hexToRgba(pal.warning,.16));root.style.setProperty("--danger-soft",hexToRgba(pal.danger,.15));root.style.setProperty("--chart-line",pal.primary);root.style.setProperty("--logo-color",theme==="light"?"#161616":pal.primary);
+}
+function hexToRgba(hex,a){const n=parseInt(hex.slice(1),16);return`rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`}
+function rgbaFromHex(hex,a){const n=parseInt(hex.slice(1),16);return`rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${Math.max(0,Math.min(1,a??1))})`}
+function parseCssColor(value){
+  const v=String(value||"").trim();
+  if(/^#[0-9a-fA-F]{6}$/.test(v)){const n=parseInt(v.slice(1),16);return{r:(n>>16)&255,g:(n>>8)&255,b:n&255,a:1}}
+  const m=v.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*[,/]\s*([\d.]+))?\s*\)$/i);
+  if(m)return{r:Math.round(Number(m[1])),g:Math.round(Number(m[2])),b:Math.round(Number(m[3])),a:m[4]===undefined?1:Math.max(0,Math.min(1,Number(m[4])>1?Number(m[4])/100:Number(m[4])))};
+  return {r:59,g:130,b:246,a:1};
+}
+function rgbToHex(r,g,b){return"#"+[r,g,b].map(x=>Math.max(0,Math.min(255,Math.round(x))).toString(16).padStart(2,"0")).join("")}
+function hexToHsv(hex){const c=parseCssColor(hex),r=c.r/255,g=c.g/255,b=c.b/255,max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;let h=0;if(d){if(max===r)h=((g-b)/d)%6;else if(max===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;if(h<0)h+=360}return{h,s:max?d/max:0,v:max,a:c.a}}
+function hsvToHex(h,s,v){const c=v*s,x=c*(1-Math.abs((h/60)%2-1)),m=v-c;let r=0,g=0,b=0;if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}return rgbToHex((r+m)*255,(g+m)*255,(b+m)*255)}
+function hexToRgb(hex){const c=parseCssColor(hex);return{r:c.r,g:c.g,b:c.b}}
+function hexToHsl(hex){let{r,g,b}=hexToRgb(hex);r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min,l=(max+min)/2;if(!d)return{h:0,s:0,l:Math.round(l*100)};const ss=d/(1-Math.abs(2*l-1));let h=max===r?60*(((g-b)/d)%6):max===g?60*((b-r)/d+2):60*((r-g)/d+4);if(h<0)h+=360;return{h:Math.round(h),s:Math.round(ss*100),l:Math.round(l*100)}}
+function getCurrentPaletteColor(){if(!paletteState)paletteState=getStoredPaletteState();const theme=document.documentElement.getAttribute("data-theme")||"dark";return paletteState[theme][paletteSlot]||DEFAULT_PALETTES[theme][paletteSlot]}
+function getCurrentPaletteAlpha(){if(!paletteAlphaState||!paletteAlphaState.dark)paletteAlphaState=getStoredPaletteAlphaState();const theme=document.documentElement.getAttribute("data-theme")||"dark";return paletteAlphaState[theme][paletteSlot]??1}
+function setCurrentPaletteColor(hex,alpha=getCurrentPaletteAlpha(),rerender=true){if(!/^#[0-9a-fA-F]{6}$/.test(hex))return;const theme=document.documentElement.getAttribute("data-theme")||"dark";paletteState[theme][paletteSlot]=hex.toLowerCase();paletteAlphaState[theme][paletteSlot]=Math.max(0,Math.min(1,Number(alpha)));savePaletteState();savePaletteAlphaState();applyPaletteForCurrentTheme();addRecentColor(hex,paletteAlphaState[theme][paletteSlot]);if(rerender)renderPaletteEditor(false);scheduleAutoBackup()}
+function refreshPaletteLiveUI(){
+  const theme=document.documentElement.getAttribute("data-theme")||"dark",color=getCurrentPaletteColor(),alpha=getCurrentPaletteAlpha(),rgb=hexToRgb(color),hsl=hexToHsl(color);
+  const swatch=$(".palette-current-swatch");if(swatch)swatch.style.background=rgbaFromHex(color,alpha);
+  if($("#paletteHex"))$("#paletteHex").value=color;
+  const vals=$all(".palette-values input");if(vals[1])vals[1].value=`${rgb.r}, ${rgb.g}, ${rgb.b}`;if(vals[2])vals[2].value=`${hsl.h}°, ${hsl.s}%, ${hsl.l}%`;
+  if($("#paletteAlphaValue"))$("#paletteAlphaValue").textContent=Math.round(alpha*100)+"%";
+  if($("#paletteBrightnessValue"))$("#paletteBrightnessValue").textContent=Math.round(hexToHsv(color).v*100)+"%";
+  $all("[data-palette-slot]").forEach(b=>{const slot=b.dataset.paletteSlot;const sw=b.querySelector(".palette-swatch"),strong=b.querySelector("strong");if(sw)sw.style.background=rgbaFromHex(paletteState[theme][slot],paletteAlphaState[theme][slot]);if(strong)strong.textContent=`${paletteState[theme][slot]} · ${Math.round(paletteAlphaState[theme][slot]*100)}%`;b.classList.toggle("active",slot===paletteSlot)});
+  drawPaletteColorBox();
+}
+function addRecentColor(hex,alpha=1){let arr=getRecentColors();const value={hex:hex.toLowerCase(),alpha:Number(alpha)};arr=[value,...arr.filter(x=>(x.hex||x).toLowerCase()!==value.hex)].slice(0,12);safeSet(PALETTE_RECENTS_KEY,JSON.stringify(arr))}
+function getRecentColors(){try{return JSON.parse(safeGet(PALETTE_RECENTS_KEY)||"[]").map(x=>typeof x==="string"?{hex:x,alpha:1}:x)}catch(e){return[]}}
+function getSavedPalettes(){try{return JSON.parse(safeGet(PALETTE_SAVED_KEY)||"[]")}catch(e){return[]}}
+function saveNamedPalette(){const name=prompt("Name this palette:");if(!name?.trim())return;const arr=getSavedPalettes();arr.push({id:uid(),name:name.trim().slice(0,40),state:JSON.parse(JSON.stringify(paletteState)),alpha:JSON.parse(JSON.stringify(paletteAlphaState)),createdAt:Date.now()});safeSet(PALETTE_SAVED_KEY,JSON.stringify(arr));renderPaletteEditor();toast("Palette saved.")}
+function applySavedPalette(id){const p=getSavedPalettes().find(x=>x.id===id);if(!p)return;paletteState=normalizePaletteState(p.state);paletteAlphaState=normalizePaletteAlphaState(p.alpha);savePaletteState();savePaletteAlphaState();applyPaletteForCurrentTheme();renderPaletteEditor();scheduleAutoBackup();toast("Palette applied.")}
+function resetPalette(){paletteState=normalizePaletteState(DEFAULT_PALETTES);paletteAlphaState=normalizePaletteAlphaState(null);savePaletteState();savePaletteAlphaState();applyPaletteForCurrentTheme();renderPaletteEditor();scheduleAutoBackup();toast("CricTracker default palette restored.")}
+function drawPaletteColorBox(){
+  const canvas=$("#paletteColorCanvas");if(!canvas)return;const rect=canvas.getBoundingClientRect(),w=Math.max(220,Math.floor(rect.width)),h=Math.max(220,Math.floor(rect.height)),dpr=devicePixelRatio||1;
+  if(canvas.width!==w*dpr||canvas.height!==h*dpr){canvas.width=w*dpr;canvas.height=h*dpr}const ctx=canvas.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);
+  const hue=Number($("#paletteHue")?.value||hexToHsv(getCurrentPaletteColor()).h),grad=ctx.createLinearGradient(0,0,w,0);grad.addColorStop(0,"#fff");grad.addColorStop(1,hsvToHex(hue,1,1));ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
+  const shade=ctx.createLinearGradient(0,0,0,h);shade.addColorStop(0,"rgba(0,0,0,0)");shade.addColorStop(1,"#000");ctx.fillStyle=shade;ctx.fillRect(0,0,w,h);
+  const hsv=hexToHsv(getCurrentPaletteColor()),x=hsv.s*w,y=(1-hsv.v)*h;ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);ctx.fillStyle="transparent";ctx.lineWidth=2.5;ctx.strokeStyle="#fff";ctx.stroke();
+}
+function updatePaletteFromControls(){
+  const hue=Number($("#paletteHue")?.value||0),alpha=Number($("#paletteAlpha")?.value||100)/100,brightness=Number($("#paletteBrightness")?.value||100)/100;
+  const current=hexToHsv(getCurrentPaletteColor());const hex=hsvToHex(hue,current.s,Math.max(0,Math.min(1,brightness)));setCurrentPaletteColor(hex,alpha,false);refreshPaletteLiveUI();
+}
+function renderPaletteEditor(){
+  const root=$("#paletteEditor");if(!root)return;if(!paletteState)paletteState=getStoredPaletteState();if(!paletteAlphaState||!paletteAlphaState.dark)paletteAlphaState=getStoredPaletteAlphaState();
+  const theme=document.documentElement.getAttribute("data-theme")||"dark",color=getCurrentPaletteColor(),rgb=hexToRgb(color),hsl=hexToHsl(color),hsv=hexToHsv(color),alpha=getCurrentPaletteAlpha(),recent=getRecentColors(),saved=getSavedPalettes();
+  root.innerHTML=`<div class="palette-picker-card"><div class="v2-muted" style="margin-bottom:8px">Color Box — saturation left to right, brightness top to bottom</div><div class="palette-color-box"><canvas id="paletteColorCanvas" aria-label="Color selection box"></canvas></div><div class="palette-slider-block"><div class="palette-slider-label"><span>Hue</span><span>${Math.round(hsv.h)}°</span></div><input class="palette-slider" id="paletteHue" type="range" min="0" max="360" step="1" value="${Math.round(hsv.h)}" aria-label="Hue"></div><div class="palette-slider-block"><div class="palette-slider-label"><span>Opacity / Alpha</span><span id="paletteAlphaValue">${Math.round(alpha*100)}%</span></div><div class="palette-alpha-track"><input class="palette-slider" id="paletteAlpha" type="range" min="0" max="100" step="1" value="${Math.round(alpha*100)}" aria-label="Opacity"></div></div><div class="palette-slider-block"><div class="palette-slider-label"><span>Brightness / Lightness</span><span id="paletteBrightnessValue">${Math.round(hsv.v*100)}%</span></div><input class="palette-slider" id="paletteBrightness" type="range" min="0" max="100" step="1" value="${Math.round(hsv.v*100)}" aria-label="Brightness"></div><div class="palette-current"><div class="palette-current-swatch" style="background:${rgbaFromHex(color,alpha)}"></div><div><strong>${PALETTE_LABELS[paletteSlot]}</strong><div class="v2-muted">${theme} theme · ${Math.round(alpha*100)}% opacity</div></div></div><div class="palette-values"><div class="field"><label>HEX</label><input id="paletteHex" value="${color}" maxlength="7" spellcheck="false"></div><div class="field"><label>RGB</label><input value="${rgb.r}, ${rgb.g}, ${rgb.b}" readonly></div><div class="field"><label>HSL</label><input value="${hsl.h}°, ${hsl.s}%, ${hsl.l}%" readonly></div></div><div class="palette-toolbar"><button class="btn btn-primary btn-sm" id="savePaletteBtn">Save Named Palette</button><button class="btn btn-ghost btn-sm" id="resetSlotBtn">Reset Slot</button></div><p class="palette-note">Choose the hue first, then use the color box and sliders to fine-tune saturation, brightness and opacity. Changes apply instantly.</p></div><div class="palette-slots-card"><h3 style="margin-bottom:10px">Palette Colors</h3><div class="palette-slot-list">${Object.keys(PALETTE_LABELS).map(slot=>`<button class="palette-slot ${slot===paletteSlot?"active":""}" data-palette-slot="${slot}"><span class="palette-swatch" style="background:${rgbaFromHex(paletteState[theme][slot],paletteAlphaState[theme][slot])}"></span><span><small>${PALETTE_LABELS[slot]}</small><strong>${paletteState[theme][slot]} · ${Math.round(paletteAlphaState[theme][slot]*100)}%</strong></span></button>`).join("")}</div><h3 style="margin:16px 0 8px">Recent Colors</h3><div class="palette-history">${recent.length?recent.map(c=>`<button class="color-chip" title="${c.hex} · ${Math.round((c.alpha??1)*100)}%" style="background:${rgbaFromHex(c.hex,c.alpha??1)}" data-recent-color="${c.hex}" data-recent-alpha="${c.alpha??1}"></button>`).join(""):'<span class="v2-muted">No recent colors yet.</span>'}</div><h3 style="margin:16px 0 8px">Saved Palettes</h3><div class="palette-saved">${saved.length?saved.map(p=>`<button class="btn btn-ghost btn-sm" data-saved-palette="${p.id}">${esc(p.name)}</button>`).join(""):'<span class="v2-muted">No saved palettes yet.</span>'}</div><h3 style="margin:16px 0 8px">Palette From Image</h3><input class="palette-image-input" type="file" id="paletteImageInput" accept="image/*"><div id="paletteImageResult" class="palette-image-result"><span class="v2-muted">Choose an image to extract colors locally.</span></div></div>`;
+  const canvas=$("#paletteColorCanvas"),hexInput=$("#paletteHex");
+  const refreshControls=()=>{const c=hexToHsv(getCurrentPaletteColor());$("#paletteHue").value=Math.round(c.h);$("#paletteBrightness").value=Math.round(c.v*100);$("#paletteAlpha").value=Math.round(getCurrentPaletteAlpha()*100);$("#paletteAlphaValue").textContent=Math.round(getCurrentPaletteAlpha()*100)+"%";$("#paletteBrightnessValue").textContent=Math.round(c.v*100)+"%";drawPaletteColorBox()};
+  const updateFromPoint=e=>{const rect=canvas.getBoundingClientRect(),x=Math.max(0,Math.min(rect.width,e.clientX-rect.left)),y=Math.max(0,Math.min(rect.height,e.clientY-rect.top)),hue=Number($("#paletteHue").value),s=x/rect.width,v=1-y/rect.height,alpha=Number($("#paletteAlpha").value)/100;setCurrentPaletteColor(hsvToHex(hue,s,v),alpha,false);refreshPaletteLiveUI()};
+  let dragging=false;canvas.onpointerdown=e=>{dragging=true;canvas.setPointerCapture?.(e.pointerId);updateFromPoint(e)};canvas.onpointermove=e=>{if(dragging)updateFromPoint(e)};canvas.onpointerup=()=>dragging=false;canvas.onpointercancel=()=>dragging=false;
+  $("#paletteHue").oninput=()=>{updatePaletteFromControls()};
+  $("#paletteAlpha").oninput=()=>{const a=Number($("#paletteAlpha").value)/100;setCurrentPaletteColor(getCurrentPaletteColor(),a,false);refreshPaletteLiveUI()};
+  $("#paletteBrightness").oninput=()=>{const v=Number($("#paletteBrightness").value)/100;const h=Number($("#paletteHue").value),c=hexToHsv(getCurrentPaletteColor());setCurrentPaletteColor(hsvToHex(h,c.s,v),getCurrentPaletteAlpha(),false);refreshPaletteLiveUI()};
+  hexInput.onchange=()=>{let v=hexInput.value.trim();if(!v.startsWith("#"))v="#"+v;if(/^#[0-9a-fA-F]{6}$/.test(v))setCurrentPaletteColor(v,getCurrentPaletteAlpha());else{toast("Use a 6-digit HEX color.",true);renderPaletteEditor()}};
+  $all("[data-palette-slot]").forEach(b=>b.onclick=()=>{paletteSlot=b.dataset.paletteSlot;renderPaletteEditor()});
+  $all("[data-recent-color]").forEach(b=>b.onclick=()=>setCurrentPaletteColor(b.dataset.recentColor,Number(b.dataset.recentAlpha||1)));
+  $all("[data-saved-palette]").forEach(b=>b.onclick=()=>applySavedPalette(b.dataset.savedPalette));
+  $("#savePaletteBtn").onclick=saveNamedPalette;$("#resetSlotBtn").onclick=()=>{const t=document.documentElement.getAttribute("data-theme")||"dark";paletteState[t][paletteSlot]=DEFAULT_PALETTES[t][paletteSlot];paletteAlphaState[t][paletteSlot]=1;savePaletteState();savePaletteAlphaState();applyPaletteForCurrentTheme();renderPaletteEditor();scheduleAutoBackup()};
+  $("#paletteImageInput").onchange=e=>extractPaletteFromImage(e.target.files?.[0]);
+  requestAnimationFrame(()=>{refreshControls();drawPaletteColorBox()});
+}
+function renderPaletteSettings(){if(!paletteState)paletteState=getStoredPaletteState();if(!paletteAlphaState||!paletteAlphaState.dark)paletteAlphaState=getStoredPaletteAlphaState();renderPaletteEditor()}
+async function extractPaletteFromImage(file){
+  if(!file)return;
+  try{
+    const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=reject;i.src=URL.createObjectURL(file)});
+    const c=document.createElement("canvas"),ctx=c.getContext("2d"),max=120,scale=Math.min(1,max/Math.max(img.width,img.height));c.width=Math.max(1,Math.round(img.width*scale));c.height=Math.max(1,Math.round(img.height*scale));ctx.drawImage(img,0,0,c.width,c.height);
+    const data=ctx.getImageData(0,0,c.width,c.height).data,bins=new Map();
+    for(let i=0;i<data.length;i+=16){if(data[i+3]<180)continue;const r=Math.round(data[i]/32)*32,g=Math.round(data[i+1]/32)*32,b=Math.round(data[i+2]/32)*32,key=`${r},${g},${b}`;bins.set(key,(bins.get(key)||0)+1)}
+    const colors=[...bins.entries()].sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k])=>{const [r,g,b]=k.split(",").map(Number);return"#"+[r,g,b].map(x=>Math.min(255,x).toString(16).padStart(2,"0")).join("")});
+    const result=$("#paletteImageResult");result.innerHTML=colors.map(c=>`<button class="color-chip" title="${c}" style="background:${c}" data-image-color="${c}"></button>`).join("")||'<span class="v2-muted">No usable colors found.</span>';
+    $all("[data-image-color]").forEach(b=>b.onclick=()=>setCurrentPaletteColor(b.dataset.imageColor));URL.revokeObjectURL(img.src);
+  }catch(e){toast("Could not read that image.",true)}
+}
+function renderPaletteSettings(){if(!paletteState)paletteState=getStoredPaletteState();renderPaletteEditor()}
+function initBackupState(){backupLastSync=safeGet("ct_backup_last_sync")||null;loadBackupHandle().then(()=>updateBackupUI()).catch(()=>updateBackupUI())}
+function initLocalAccountUI(){
+  $("#completeSetupBtn").addEventListener("click",completeV2Setup);
+  $("#profileName").addEventListener("keydown",e=>{if(e.key==="Enter")$("#setupPasscode").focus()});
+  $("#setupPasscode").addEventListener("keydown",e=>{if(e.key==="Enter")$("#setupPasscode2").focus()});
+}
+/* ============================= EVENTS ============================= */
+function bindEvents(){
+  $("#unlockBtn").addEventListener("click", ()=>tryUnlock($("#passcodeInput").value));
+  $("#passcodeInput").addEventListener("keydown", (e)=>{ if(e.key==="Enter") tryUnlock($("#passcodeInput").value); });
+
+  $all(".nav-link").forEach(btn=>btn.addEventListener("click", ()=>switchView(btn.dataset.view)));
+  $all("[data-nav]").forEach(btn=>btn.addEventListener("click", ()=>switchView(btn.dataset.nav)));
+  $("#navToggle").addEventListener("click", ()=>$("#mainNav").classList.toggle("open"));
+
+  $("#themeToggle").addEventListener("click", toggleTheme);
+  $("#lockBtn").addEventListener("click", lockApp);
+
+  $("#saveLogBtn").addEventListener("click", saveLog);
+  $("#cancelEditBtn").addEventListener("click", ()=>{ editingId=null; switchView("dashboard"); });
+  $("#fIsGameDay").addEventListener("change", (e)=>{
+    if(e.target.checked){
+      $("#fIsHoliday").checked = false;
+      applyHolidayVisibility(false);
+    }
+    applyGameDayVisibility(e.target.checked);
+    if(e.target.checked){
+      formCategories = {batting:false,bowling:false,fielding:false,fitness:false};
+      formRatings = {};
+      renderCategoryChecks();
+      renderRatingPanels();
+    }
+  });
+  $("#fIsHoliday").addEventListener("change", (e)=>{
+    if(e.target.checked){
+      $("#fIsGameDay").checked = false;
+      applyGameDayVisibility(false);
+      formCategories = {batting:false,bowling:false,fielding:false,fitness:false};
+      formRatings = {};
+      renderCategoryChecks();
+      renderRatingPanels();
+    }
+    applyHolidayVisibility(e.target.checked);
+  });
+
+  $("#listViewBtn").addEventListener("click", ()=>{ journalMode="list"; renderJournal(); });
+  $("#calViewBtn").addEventListener("click", ()=>{ journalMode="calendar"; renderJournal(); });
+  $("#searchInput").addEventListener("input", renderJournal);
+  $("#calPrev").addEventListener("click", ()=>{ calCursor.setMonth(calCursor.getMonth()-1); renderCalendar(); });
+  $("#calNext").addEventListener("click", ()=>{ calCursor.setMonth(calCursor.getMonth()+1); renderCalendar(); });
+
+  $("#saveGoalsBtn").addEventListener("click", saveGoals);
+  $("#saveHolidaysBtn").addEventListener("click", saveHolidays);
+  $("#changePassBtn").addEventListener("click", changePasscode);
+  $("#exportBtn").addEventListener("click", exportData);
+  $("#importBtn").addEventListener("click", ()=>$("#importFile").click());
+  $("#importFile").addEventListener("change", (e)=>{
+    const file = e.target.files[0];
+    if(file) importData(file);
+    e.target.value = "";
+  });
+  $("#wipeBtn").addEventListener("click", wipeAllData);
+  $("#saveAutoLockBtn")?.addEventListener("click",async()=>{
+    autoLockMinutes=Number($("#autoLockSelect").value)||0;
+    await persistV2Meta("autoLockMinutes",autoLockMinutes);
+    toast("Auto-lock setting saved.");
+  });
+  $("#setBackupFileBtn")?.addEventListener("click",chooseNewBackupFile);
+  $("#connectExistingBackupBtn")?.addEventListener("click",chooseExistingBackupFile);
+  $("#backupNowBtn")?.addEventListener("click",()=>backupNow(false));
+  $("#restoreConnectedBackupBtn")?.addEventListener("click",restoreConnectedBackup);
+  $("#disconnectBackupBtn")?.addEventListener("click",disconnectBackup);
+  $("#resetPaletteBtn")?.addEventListener("click",resetPalette);
+}
+
+/* ============================= INIT ============================= */
+async function init(){
+  const savedTheme = safeGet("ct_theme") || "dark";
+  applyTheme(savedTheme);
+  paletteAlphaState=getStoredPaletteAlphaState();
+  paletteState=getStoredPaletteState();
+  applyPaletteForCurrentTheme();
+  await ensureDefaultPasscode();
+  bindEvents();
+  setupV2();
+  await initV2AccountGate();
+  initLocalAccountUI();
+  initBackupState();
+  resetEditor();
+  $("#passcodeInput").focus();
+}
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
+init();
+
+})();
+</script>
+
+</body>
+</html>

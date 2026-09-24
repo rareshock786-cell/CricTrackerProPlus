@@ -6,18 +6,27 @@ There is no server, no account in the cloud, and no monthly fee. Everything you 
 
 What it does
 Dashboard — a command-center overview of your cricket life: today's activity, recent sessions, active goals, weekly/monthly summaries, milestones, total runs and wickets, and a "No. of Days" counter.
+
 Matches — record full match performances, split into four sections:
 Venue — overs, location, date, result
 Batting — runs, balls faced, fours, sixes
 Bowling — overs bowled, economy, wickets, runs conceded, extras
 Fielding — run-outs/stumpings, catches
 Plus free-text match notes.
+
 Training Tracker — log batting drills, bowling drills, and fitness sessions with duration, intensity, notes and a session rating.
+
 Journal — a reflective log for training, match, fitness or general entries: what went well, what went wrong, what you learned, and your focus for next time. Includes search, a list view, and a calendar view.
+
 Calendar — see training, matches, journal entries and goals laid out by day.
+
 Goals & Settings — set Target Ratings (1–10) for Batting, Bowling, Fielding and Fitness, manage your appearance, your passcode, and your data backups.
+
 Custom Appearance — a full color palette editor (hue, saturation, brightness, opacity, HEX/RGB/HSL, saved palettes, presets) so you can theme the app however you like, in light or dark mode.
+
 Security — your data is protected by a personal passcode you set yourself, encrypted locally on your device with AES‑GCM. There's no "master password" and nobody but you can unlock it. Auto-lock and manual lock are both supported.
+
+
 How your data is stored
 
 CricTracker-ProPlus keeps your data in two places:
@@ -69,14 +78,24 @@ If you're setting this up on a new device (or reinstalled the browser) and you a
 
 A few friendly notes
 The "Backup Now" button is just an emergency manual button — you normally never need to press it, since backups happen automatically.
+
 The "Restore File" button lets you load your data back in from the backup file (handy if you ever get a new device).
+
 The "Disconnect" button stops the automatic saving, if you ever want to turn it off.
+
 If your browser doesn't support this feature (some browsers don't), the app will tell you and you can use the Export/Import buttons instead — same idea, just one extra click each time.
+
 Your data on the device itself is always safe either way — the automatic file is just an extra safety copy.
+
 Technical notes (for developers / advanced users)
+
 Storage backend: IndexedDB is primary; falls back to localStorage automatically if IndexedDB is unavailable.
+
 Backup file: Uses the browser's File System Access API (showSaveFilePicker / showOpenFilePicker) to keep read/write access to a chosen local file. The file handle is remembered in IndexedDB so the connection survives a page refresh, as long as the browser still grants permission.
+
 Sync behavior: Writes are debounced (~1.5 seconds after the last change) to avoid excessive disk writes. A failed backup write never rolls back or touches your IndexedDB data — your working data always stays safe.
+
 Encryption: The backup JSON is encrypted with AES-GCM using a key derived from your passcode. It is unreadable without your passcode.
+
 Hosting: Deployed via GitHub Pages. GitHub Pages hosts the static app files only — it cannot write back to your local backup file. All read/write backup activity happens directly between your browser and your own computer's file system.
 PWA / offline support: A service worker (sw.js) caches the app shell so it keeps working with no internet connection. The cache version is bumped whenever app assets change, so users automatically get the latest version after their next visit.

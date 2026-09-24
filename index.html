@@ -18,7 +18,7 @@
 }
 html[data-theme="dark"]{
   --bg:#0b1220; --bg-stripe:rgba(59,130,246,.035);
-  --card:#111827; --card-hover:#172033; --border:#263650;
+  --card:#111827; --card-hover:#172033; --border:#263650; --nav-bg:#111827;
   --ink:#eef4ff; --ink-dim:#9fb0c7; --ink-faint:#62748a;
   --grass:#3b82f6; --grass-strong:#2563eb; --grass-soft:rgba(59,130,246,.16);
   --gold-soft:rgba(209,172,58,.16);
@@ -31,7 +31,7 @@ html[data-theme="dark"]{
 }
 html[data-theme="light"]{
   --bg:#f4f8ff; --bg-stripe:rgba(37,99,235,.04);
-  --card:#ffffff; --card-hover:#f8fbff; --border:#dbe5f2;
+  --card:#ffffff; --card-hover:#f8fbff; --border:#dbe5f2; --nav-bg:#ffffff;
   --ink:#172033; --ink-dim:#53657a; --ink-faint:#8a99ab;
   --grass:#2563eb; --grass-strong:#1d4ed8; --grass-soft:rgba(37,99,235,.10);
   --gold-soft:rgba(168,121,15,.12);
@@ -110,7 +110,7 @@ a{color:var(--grass);}
 /* ---------- App shell ---------- */
 .app-header{
   position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:20px;
-  padding:14px 28px; background:var(--card); border-bottom:1px solid var(--border);
+  padding:14px 28px; background:var(--nav-bg); border-bottom:1px solid var(--border);
 }
 .brand{display:flex; align-items:center; gap:8px; flex-shrink:0;}
 .brand svg{width:26px;height:26px;}
@@ -305,7 +305,7 @@ html[data-theme="light"] .rating-panel{background:var(--bg-alt,#eef4ff);}
   .reflect-grid{grid-template-columns:1fr;}
   .settings-grid{grid-template-columns:1fr;}
   .progress-summary{grid-template-columns:1fr;}
-  .main-nav{display:none; position:absolute; top:100%; left:0; right:0; background:var(--card); flex-direction:column; padding:10px; border-bottom:1px solid var(--border);}
+  .main-nav{display:none; position:absolute; top:100%; left:0; right:0; background:var(--nav-bg); flex-direction:column; padding:10px; border-bottom:1px solid var(--border);}
   .main-nav.open{display:flex;}
   .nav-link.active::after{display:none;}
   .nav-toggle{display:block;}
@@ -372,6 +372,7 @@ html[data-theme="light"] .rating-panel{background:var(--bg-alt,#eef4ff);}
 .palette-slider-block{margin-top:13px}
 .palette-slider-label{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-dim);margin-bottom:6px}
 .palette-slider{width:100%;height:18px;margin:0;appearance:none;-webkit-appearance:none;background:transparent;cursor:pointer}
+.palette-slider:disabled{opacity:.4;cursor:not-allowed}
 .palette-slider::-webkit-slider-runnable-track{height:12px;border-radius:999px;border:1px solid rgba(255,255,255,.16)}
 .palette-slider::-moz-range-track{height:12px;border-radius:999px;border:1px solid rgba(255,255,255,.16)}
 #paletteHue{background:linear-gradient(90deg,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000);border-radius:999px}
@@ -2310,7 +2311,7 @@ function normalizePaletteState(state){
 }
 function normalizePaletteAlphaState(state){
   const out={dark:{},light:{}};
-  for(const theme of ["dark","light"])for(const slot of Object.keys(PALETTE_LABELS)){const v=Number(state?.[theme]?.[slot]);out[theme][slot]=Number.isFinite(v)?Math.max(0,Math.min(1,v)):1}
+  for(const theme of ["dark","light"])for(const slot of Object.keys(PALETTE_LABELS)){const v=Number(state?.[theme]?.[slot]);out[theme][slot]=OPAQUE_SLOTS.includes(slot)?1:(Number.isFinite(v)?Math.max(0,Math.min(1,v)):1)}
   return out;
 }
 function getStoredPaletteAlphaState(){try{const raw=safeGet(PALETTE_ALPHA_KEY);return raw?normalizePaletteAlphaState(JSON.parse(raw)):normalizePaletteAlphaState(null)}catch(e){return normalizePaletteAlphaState(null)}}
@@ -2318,12 +2319,14 @@ function savePaletteAlphaState(){safeSet(PALETTE_ALPHA_KEY,JSON.stringify(palett
 function getStoredPaletteState(){try{const raw=safeGet(PALETTE_KEY_PREFIX+"state");return raw?normalizePaletteState(JSON.parse(raw)):normalizePaletteState(DEFAULT_PALETTES)}catch(e){return normalizePaletteState(DEFAULT_PALETTES)}}
 function savePaletteState(){safeSet(PALETTE_KEY_PREFIX+"state",JSON.stringify(paletteState))}
 function saveDefaultPaletteState(){paletteState=getStoredPaletteState();paletteAlphaState=getStoredPaletteAlphaState();savePaletteState();savePaletteAlphaState();applyPaletteForCurrentTheme()}
+const OPAQUE_SLOTS = ["background"];
 function applyPaletteForCurrentTheme(){
   if(!paletteState)paletteState=getStoredPaletteState();
   if(!paletteAlphaState||!paletteAlphaState.dark)paletteAlphaState=getStoredPaletteAlphaState();
   const theme=document.documentElement.getAttribute("data-theme")||"dark",pal=paletteState[theme]||DEFAULT_PALETTES[theme],root=document.documentElement;
-  for(const [slot,cssVar] of Object.entries(PALETTE_CSS))root.style.setProperty(cssVar,rgbaFromHex(pal[slot],paletteAlphaState[theme][slot]));
+  for(const [slot,cssVar] of Object.entries(PALETTE_CSS))root.style.setProperty(cssVar,rgbaFromHex(pal[slot],OPAQUE_SLOTS.includes(slot)?1:paletteAlphaState[theme][slot]));
   root.style.setProperty("--grass-soft",hexToRgba(pal.primary,.16));root.style.setProperty("--sky-soft",hexToRgba(pal.accent,.16));root.style.setProperty("--gold-soft",hexToRgba(pal.warning,.16));root.style.setProperty("--danger-soft",hexToRgba(pal.danger,.15));root.style.setProperty("--chart-line",pal.primary);root.style.setProperty("--logo-color",theme==="light"?"#161616":pal.primary);
+  root.style.setProperty("--nav-bg",rgbaFromHex(pal.surface,1));
 }
 function hexToRgba(hex,a){const n=parseInt(hex.slice(1),16);return`rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`}
 function rgbaFromHex(hex,a){const n=parseInt(hex.slice(1),16);return`rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${Math.max(0,Math.min(1,a??1))})`}
@@ -2340,8 +2343,8 @@ function hsvToHex(h,s,v){const c=v*s,x=c*(1-Math.abs((h/60)%2-1)),m=v-c;let r=0,
 function hexToRgb(hex){const c=parseCssColor(hex);return{r:c.r,g:c.g,b:c.b}}
 function hexToHsl(hex){let{r,g,b}=hexToRgb(hex);r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min,l=(max+min)/2;if(!d)return{h:0,s:0,l:Math.round(l*100)};const ss=d/(1-Math.abs(2*l-1));let h=max===r?60*(((g-b)/d)%6):max===g?60*((b-r)/d+2):60*((r-g)/d+4);if(h<0)h+=360;return{h:Math.round(h),s:Math.round(ss*100),l:Math.round(l*100)}}
 function getCurrentPaletteColor(){if(!paletteState)paletteState=getStoredPaletteState();const theme=document.documentElement.getAttribute("data-theme")||"dark";return paletteState[theme][paletteSlot]||DEFAULT_PALETTES[theme][paletteSlot]}
-function getCurrentPaletteAlpha(){if(!paletteAlphaState||!paletteAlphaState.dark)paletteAlphaState=getStoredPaletteAlphaState();const theme=document.documentElement.getAttribute("data-theme")||"dark";return paletteAlphaState[theme][paletteSlot]??1}
-function setCurrentPaletteColor(hex,alpha=getCurrentPaletteAlpha(),rerender=true){if(!/^#[0-9a-fA-F]{6}$/.test(hex))return;const theme=document.documentElement.getAttribute("data-theme")||"dark";paletteState[theme][paletteSlot]=hex.toLowerCase();paletteAlphaState[theme][paletteSlot]=Math.max(0,Math.min(1,Number(alpha)));savePaletteState();savePaletteAlphaState();applyPaletteForCurrentTheme();addRecentColor(hex,paletteAlphaState[theme][paletteSlot]);if(rerender)renderPaletteEditor(false);scheduleAutoBackup()}
+function getCurrentPaletteAlpha(){if(OPAQUE_SLOTS.includes(paletteSlot))return 1;if(!paletteAlphaState||!paletteAlphaState.dark)paletteAlphaState=getStoredPaletteAlphaState();const theme=document.documentElement.getAttribute("data-theme")||"dark";return paletteAlphaState[theme][paletteSlot]??1}
+function setCurrentPaletteColor(hex,alpha=getCurrentPaletteAlpha(),rerender=true){if(!/^#[0-9a-fA-F]{6}$/.test(hex))return;const theme=document.documentElement.getAttribute("data-theme")||"dark";paletteState[theme][paletteSlot]=hex.toLowerCase();paletteAlphaState[theme][paletteSlot]=OPAQUE_SLOTS.includes(paletteSlot)?1:Math.max(0,Math.min(1,Number(alpha)));savePaletteState();savePaletteAlphaState();applyPaletteForCurrentTheme();addRecentColor(hex,paletteAlphaState[theme][paletteSlot]);if(rerender)renderPaletteEditor(false);scheduleAutoBackup()}
 function refreshPaletteLiveUI(){
   const theme=document.documentElement.getAttribute("data-theme")||"dark",color=getCurrentPaletteColor(),alpha=getCurrentPaletteAlpha(),rgb=hexToRgb(color),hsl=hexToHsl(color);
   const swatch=$(".palette-current-swatch");if(swatch)swatch.style.background=rgbaFromHex(color,alpha);
@@ -2371,8 +2374,8 @@ function updatePaletteFromControls(){
 }
 function renderPaletteEditor(){
   const root=$("#paletteEditor");if(!root)return;if(!paletteState)paletteState=getStoredPaletteState();if(!paletteAlphaState||!paletteAlphaState.dark)paletteAlphaState=getStoredPaletteAlphaState();
-  const theme=document.documentElement.getAttribute("data-theme")||"dark",color=getCurrentPaletteColor(),rgb=hexToRgb(color),hsl=hexToHsl(color),hsv=hexToHsv(color),alpha=getCurrentPaletteAlpha(),recent=getRecentColors(),saved=getSavedPalettes();
-  root.innerHTML=`<div class="palette-picker-card"><div class="v2-muted" style="margin-bottom:8px">Color Box — saturation left to right, brightness top to bottom</div><div class="palette-color-box"><canvas id="paletteColorCanvas" aria-label="Color selection box"></canvas></div><div class="palette-slider-block"><div class="palette-slider-label"><span>Hue</span><span>${Math.round(hsv.h)}°</span></div><input class="palette-slider" id="paletteHue" type="range" min="0" max="360" step="1" value="${Math.round(hsv.h)}" aria-label="Hue"></div><div class="palette-slider-block"><div class="palette-slider-label"><span>Opacity / Alpha</span><span id="paletteAlphaValue">${Math.round(alpha*100)}%</span></div><div class="palette-alpha-track"><input class="palette-slider" id="paletteAlpha" type="range" min="0" max="100" step="1" value="${Math.round(alpha*100)}" aria-label="Opacity"></div></div><div class="palette-slider-block"><div class="palette-slider-label"><span>Brightness / Lightness</span><span id="paletteBrightnessValue">${Math.round(hsv.v*100)}%</span></div><input class="palette-slider" id="paletteBrightness" type="range" min="0" max="100" step="1" value="${Math.round(hsv.v*100)}" aria-label="Brightness"></div><div class="palette-current"><div class="palette-current-swatch" style="background:${rgbaFromHex(color,alpha)}"></div><div><strong>${PALETTE_LABELS[paletteSlot]}</strong><div class="v2-muted">${theme} theme · ${Math.round(alpha*100)}% opacity</div></div></div><div class="palette-values"><div class="field"><label>HEX</label><input id="paletteHex" value="${color}" maxlength="7" spellcheck="false"></div><div class="field"><label>RGB</label><input value="${rgb.r}, ${rgb.g}, ${rgb.b}" readonly></div><div class="field"><label>HSL</label><input value="${hsl.h}°, ${hsl.s}%, ${hsl.l}%" readonly></div></div><div class="palette-toolbar"><button class="btn btn-primary btn-sm" id="savePaletteBtn">Save Named Palette</button><button class="btn btn-ghost btn-sm" id="resetSlotBtn">Reset Slot</button></div><p class="palette-note">Choose the hue first, then use the color box and sliders to fine-tune saturation, brightness and opacity. Changes apply instantly.</p></div><div class="palette-slots-card"><h3 style="margin-bottom:10px">Palette Colors</h3><div class="palette-slot-list">${Object.keys(PALETTE_LABELS).map(slot=>`<button class="palette-slot ${slot===paletteSlot?"active":""}" data-palette-slot="${slot}"><span class="palette-swatch" style="background:${rgbaFromHex(paletteState[theme][slot],paletteAlphaState[theme][slot])}"></span><span><small>${PALETTE_LABELS[slot]}</small><strong>${paletteState[theme][slot]} · ${Math.round(paletteAlphaState[theme][slot]*100)}%</strong></span></button>`).join("")}</div><h3 style="margin:16px 0 8px">Recent Colors</h3><div class="palette-history">${recent.length?recent.map(c=>`<button class="color-chip" title="${c.hex} · ${Math.round((c.alpha??1)*100)}%" style="background:${rgbaFromHex(c.hex,c.alpha??1)}" data-recent-color="${c.hex}" data-recent-alpha="${c.alpha??1}"></button>`).join(""):'<span class="v2-muted">No recent colors yet.</span>'}</div><h3 style="margin:16px 0 8px">Saved Palettes</h3><div class="palette-saved">${saved.length?saved.map(p=>`<button class="btn btn-ghost btn-sm" data-saved-palette="${p.id}">${esc(p.name)}</button>`).join(""):'<span class="v2-muted">No saved palettes yet.</span>'}</div><h3 style="margin:16px 0 8px">Palette From Image</h3><input class="palette-image-input" type="file" id="paletteImageInput" accept="image/*"><div id="paletteImageResult" class="palette-image-result"><span class="v2-muted">Choose an image to extract colors locally.</span></div></div>`;
+  const theme=document.documentElement.getAttribute("data-theme")||"dark",color=getCurrentPaletteColor(),rgb=hexToRgb(color),hsl=hexToHsl(color),hsv=hexToHsv(color),alpha=getCurrentPaletteAlpha(),recent=getRecentColors(),saved=getSavedPalettes(),isOpaqueSlot=OPAQUE_SLOTS.includes(paletteSlot);
+  root.innerHTML=`<div class="palette-picker-card"><div class="v2-muted" style="margin-bottom:8px">Color Box — saturation left to right, brightness top to bottom</div><div class="palette-color-box"><canvas id="paletteColorCanvas" aria-label="Color selection box"></canvas></div><div class="palette-slider-block"><div class="palette-slider-label"><span>Hue</span><span>${Math.round(hsv.h)}°</span></div><input class="palette-slider" id="paletteHue" type="range" min="0" max="360" step="1" value="${Math.round(hsv.h)}" aria-label="Hue"></div><div class="palette-slider-block"><div class="palette-slider-label"><span>Opacity / Alpha</span><span id="paletteAlphaValue">${isOpaqueSlot?"100% (locked)":Math.round(alpha*100)+"%"}</span></div><div class="palette-alpha-track"><input class="palette-slider" id="paletteAlpha" type="range" min="0" max="100" step="1" value="${Math.round(alpha*100)}" aria-label="Opacity" ${isOpaqueSlot?"disabled":""}></div>${isOpaqueSlot?'<p class="palette-note" style="margin-top:8px">'+PALETTE_LABELS[paletteSlot]+' always stays fully opaque, so cards and panels never look washed out or see-through.</p>':""}</div><div class="palette-slider-block"><div class="palette-slider-label"><span>Brightness / Lightness</span><span id="paletteBrightnessValue">${Math.round(hsv.v*100)}%</span></div><input class="palette-slider" id="paletteBrightness" type="range" min="0" max="100" step="1" value="${Math.round(hsv.v*100)}" aria-label="Brightness"></div><div class="palette-current"><div class="palette-current-swatch" style="background:${rgbaFromHex(color,alpha)}"></div><div><strong>${PALETTE_LABELS[paletteSlot]}</strong><div class="v2-muted">${theme} theme · ${Math.round(alpha*100)}% opacity</div></div></div><div class="palette-values"><div class="field"><label>HEX</label><input id="paletteHex" value="${color}" maxlength="7" spellcheck="false"></div><div class="field"><label>RGB</label><input value="${rgb.r}, ${rgb.g}, ${rgb.b}" readonly></div><div class="field"><label>HSL</label><input value="${hsl.h}°, ${hsl.s}%, ${hsl.l}%" readonly></div></div><div class="palette-toolbar"><button class="btn btn-primary btn-sm" id="savePaletteBtn">Save Named Palette</button><button class="btn btn-ghost btn-sm" id="resetSlotBtn">Reset Slot</button></div><p class="palette-note">Choose the hue first, then use the color box and sliders to fine-tune saturation, brightness and opacity. Changes apply instantly.</p></div><div class="palette-slots-card"><h3 style="margin-bottom:10px">Palette Colors</h3><div class="palette-slot-list">${Object.keys(PALETTE_LABELS).map(slot=>`<button class="palette-slot ${slot===paletteSlot?"active":""}" data-palette-slot="${slot}"><span class="palette-swatch" style="background:${rgbaFromHex(paletteState[theme][slot],paletteAlphaState[theme][slot])}"></span><span><small>${PALETTE_LABELS[slot]}</small><strong>${paletteState[theme][slot]} · ${Math.round(paletteAlphaState[theme][slot]*100)}%</strong></span></button>`).join("")}</div><h3 style="margin:16px 0 8px">Recent Colors</h3><div class="palette-history">${recent.length?recent.map(c=>`<button class="color-chip" title="${c.hex} · ${Math.round((c.alpha??1)*100)}%" style="background:${rgbaFromHex(c.hex,c.alpha??1)}" data-recent-color="${c.hex}" data-recent-alpha="${c.alpha??1}"></button>`).join(""):'<span class="v2-muted">No recent colors yet.</span>'}</div><h3 style="margin:16px 0 8px">Saved Palettes</h3><div class="palette-saved">${saved.length?saved.map(p=>`<button class="btn btn-ghost btn-sm" data-saved-palette="${p.id}">${esc(p.name)}</button>`).join(""):'<span class="v2-muted">No saved palettes yet.</span>'}</div><h3 style="margin:16px 0 8px">Palette From Image</h3><input class="palette-image-input" type="file" id="paletteImageInput" accept="image/*"><div id="paletteImageResult" class="palette-image-result"><span class="v2-muted">Choose an image to extract colors locally.</span></div></div>`;
   const canvas=$("#paletteColorCanvas"),hexInput=$("#paletteHex");
   const refreshControls=()=>{const c=hexToHsv(getCurrentPaletteColor());$("#paletteHue").value=Math.round(c.h);$("#paletteBrightness").value=Math.round(c.v*100);$("#paletteAlpha").value=Math.round(getCurrentPaletteAlpha()*100);$("#paletteAlphaValue").textContent=Math.round(getCurrentPaletteAlpha()*100)+"%";$("#paletteBrightnessValue").textContent=Math.round(c.v*100)+"%";drawPaletteColorBox()};
   const updateFromPoint=e=>{const rect=canvas.getBoundingClientRect(),x=Math.max(0,Math.min(rect.width,e.clientX-rect.left)),y=Math.max(0,Math.min(rect.height,e.clientY-rect.top)),hue=Number($("#paletteHue").value),s=x/rect.width,v=1-y/rect.height,alpha=Number($("#paletteAlpha").value)/100;setCurrentPaletteColor(hsvToHex(hue,s,v),alpha,false);refreshPaletteLiveUI()};
